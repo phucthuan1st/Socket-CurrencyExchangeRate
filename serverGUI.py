@@ -7,7 +7,7 @@ from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 from tkinter import ttk, VERTICAL, HORIZONTAL, N, S, E, W
 from functools import partial
-from server import*
+from server import *
 
 # screen_width = win.winfo_screenwidth()
 # screen_height = win.winfo_screenheight()
@@ -73,7 +73,7 @@ class InfoUi:
 
     def __init__(self, frame):
         self.frame = frame
-        ttk.Label(self.frame, text = "MONEY EXCHANGE", font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
+        ttk.Label(self.frame, text = "TỶ GIÁ TIỀN TỆ", font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
         ttk.Label(self.frame, text = "Server", font = ('Times', 20)).pack (side = TOP, pady = 10)
         ttk.Label(self.frame, text = "Thông tin hiển thị:", font = ('Times', 13)).pack(side = TOP, pady = 2)
         ttk.Label(self.frame, text = "Thông tin từ server - Black", font = ('Times', 13,'italic')).pack(side = TOP, pady = 2)

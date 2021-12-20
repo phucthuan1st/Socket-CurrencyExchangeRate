@@ -1,0 +1,37 @@
+[
+    {
+        "buy": 17279.0,
+        "currency": "AUD",
+        "sell": 18348.0
+    },
+    {
+        "buy": 18464.0,
+        "currency": "CAD",
+        "sell": 19606.0
+    },
+    {
+        "buy": 24911.0,
+        "currency": "CHF",
+        "sell": 26452.0
+    },
+    {
+        "buy": 27156.0,
+        "currency": "EUR",
+        "sell": 28836.0
+    },
+    {
+        "buy": 31622.0,
+        "currency": "GBP",
+        "sell": 33577.0
+    },
+    {
+        "buy": 204.0,
+        "currency": "JPY",
+        "sell": 216.0
+    },
+    {
+        "buy": 22975.0,
+        "currency": "USD",
+        "sell": 23746.0
+    }
+]

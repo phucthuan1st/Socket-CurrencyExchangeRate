@@ -3,8 +3,8 @@ import json
 from _thread import *
 import logging
 from serverGUI import*
-import urllib.request
 import json
+import requests
 
 hostname = socket.gethostname()
 HOST = socket.gethostbyname(hostname) 
@@ -65,7 +65,6 @@ class Server:
             if sock:
                 sock.close()
 
-    ###############
     #Send data
     def sendData(self,sock, msg):
         try:
@@ -74,7 +73,7 @@ class Server:
             return
 
     #Receive data
-    def receive(self, sock): 
+    def receiveData(self, sock): 
         data = b''
         while True:
             while True:
@@ -91,7 +90,7 @@ class Server:
 
     # Đăng nhập
     def login(self,sock):
-        sub = self.receive(sock)
+        sub = self.receiveData(sock)
         sub = json.loads(sub)
         client_number = self.port_num_clients[sock.getpeername()[1]]
         self.logger.log(logging.CRITICAL,"Client " + str(client_number) + ". Usr:" + str(sub['usr']) + " - Pass:" + str(sub['psw']))   
@@ -120,7 +119,7 @@ class Server:
 
     # Đăng ký
     def regist(self, sock):
-        sub = self.receive(sock)
+        sub = self.receiveData(sock)
         sub = json.loads(sub)
         client_number = self.port_num_clients[sock.getpeername()[1]]
         self.logger.log(logging.INFO,"Client " + str(client_number) + ". Usr:" + sub['usr'] + " - Pass:" + sub['psw']) 
@@ -144,20 +143,33 @@ class Server:
         fd.close()
         return True
 
-#////////////////////////////////////////////////
-#SUA PHAN O DUOI NAY DE LAY THONG TIN TIEN TE va gui den client 
-    #Match detail
+    def updateCurrencyRate(self):
+        
+        #get data
+        url = "https://vapi.vnappmob.com/api/request_api_key?scope=exchange_rate"
+        API_data = requests.get(url).json();
+        API_key = API_data["results"]
+    
+        request = "https://vapi.vnappmob.com/api/v2/exchange_rate/sbv?api_key=" + str(API_key)
+        receive = requests.get(request).json()
+        data = receive["results"]
+        with open('Currency-Rate.json', 'w', encoding='utf-8') as _file_:
+            json.dump(data, _file_, ensure_ascii=False, indent=4)
+
+    #convert amount of money to another one
     def CurrencyConvertor (self,sock):
-        id = self.receive(sock)
+        #recieve socket
+        id = self.receiveData(sock)
         client_number = self.port_num_clients[sock.getpeername()[1]]
-        self.logger.log(logging.CRITICAL,"Client " + str(client_number) + ": ID trận đấu cần mở: " + id)
-        f = open("matchDetail.json", "r")
+        
+        self.logger.log(logging.CRITICAL,"Client " + str(client_number) + ": loại tiền tệ " + id)
+        f = open("Currency-Rate.json", "r")
         data = json.load(f)
         f.close()
 
         pos = -1
 
-        for i in range(0,len(data["match"])):
+        for i in range(0,len(data["rates"])):
             if (data["match"][i]["id"] == id):
                 pos = i
 
@@ -172,7 +184,7 @@ class Server:
             self.logger.log(logging.ERROR,"Client " + str(client_number) + ": Không tồn tại id trận đấu")
             return False
 
-    #List Match
+    #show all currency rate
     def ShowAllCurrencies(self,sock):
         client_number = self.port_num_clients[sock.getpeername()[1]]
         f = open("matchDetail.json", "r")
@@ -182,13 +194,12 @@ class Server:
         self.logger.log(logging.INFO,"Client " + str(client_number) + ": Mở danh sách trận đấu thành công")
         #self.sendData(sock, '0')
         return False
-#///////////////////////////////////////////////
         
     ### ADMIN ###
     # Thêm event
     def upEvent(self, sock):   
         client_number = self.port_num_clients[sock.getpeername()[1]]
-        data_add = self.receive(sock)  
+        data_add = self.receiveData(sock)  
         data_add = json.loads(data_add)    # Mỗi lần thêm 1 event trong 1 trận
         self.logger.log(logging.CRITICAL,str(data_add))
 
@@ -233,31 +244,34 @@ class Server:
     def threadClient(self, conn):
         str = ""
         while True:
-            str = self.receive(conn)
+            str = self.receiveData(conn)
             self.logger.log(logging.DEBUG,str)
             if (str == "LOGIN"):
                 signal = self.login(conn)
-                if (signal == 2):
+                if (signal == 2): #admin access
                     while True:
-                        str = self.receive(conn)
+                        str = self.receiveData(conn)
                         self.logger.log(logging.DEBUG,str)
                         if (str == "ADDMT"):
                             self.addMatch(conn)
-                        elif (str == "UPDMT"):
+                        elif (str == "UPDR"):
                             self.updMatch(conn)
                         elif (str == "UPDEV"):
                             self.upEvent(conn)
                         else:
                             self.clientQuit(conn)
                             return
-                elif (signal == 1):
+                elif (signal == 1): #user access
                     while True:
                         self.logger.log(logging.DEBUG,str)
-                        str = self.receive(conn)
-                        if (str == "LISTMT" or str == "LISTMRT"):
-                            self.listMatch(conn)
-                        elif (str == "MTCDT"):
+                        str = self.receiveData(conn)
+                        if (str == "SAC"):
+                            self.ShowAllCurrencies(conn)
+                        elif (str == "CRC"):
                             self.matchDetail(conn)
+                        elif (str == "SSC"):
+                            ##change code here
+                            return
                         else:
                             self.clientQuit(conn)
                             return
