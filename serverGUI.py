@@ -1,7 +1,6 @@
 import queue
 import logging
 import signal
-import threading
 from tkinter import *
 from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
@@ -76,11 +75,11 @@ class InfoUi:
         ttk.Label(self.frame, text = "TỶ GIÁ TIỀN TỆ", font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
         ttk.Label(self.frame, text = "Server", font = ('Times', 20)).pack (side = TOP, pady = 10)
         ttk.Label(self.frame, text = "Thông tin hiển thị:", font = ('Times', 13)).pack(side = TOP, pady = 2)
-        ttk.Label(self.frame, text = "Thông tin từ server - Black", font = ('Times', 13,'italic')).pack(side = TOP, pady = 2)
-        ttk.Label(self.frame, text = "Yêu cầu từ client - Gray", font = ('Times', 13,'italic')).pack(side = TOP, pady = 2)
-        ttk.Label(self.frame, text = "Data từ client - Green", font = ('Times', 13,'italic')).pack(side = TOP, pady = 2)
-        ttk.Label(self.frame, text = "Cảnh báo - Orange", font = ('Times', 13,'italic')).pack(side = TOP, pady = 2)
-        ttk.Label(self.frame, text = "Lỗi - Red", font = ('Times', 13,'italic')).pack(side = TOP, pady = 2)
+        ttk.Label(self.frame, text = "Thông tin từ server - Màu đen", font = ('Times', 13,'italic')).pack(side = TOP, pady = 2)
+        ttk.Label(self.frame, text = "Yêu cầu từ client - Màu xám", font = ('Times', 13,'italic')).pack(side = TOP, pady = 2)
+        ttk.Label(self.frame, text = "Data từ client - Màu xanh" , font = ('Times', 13,'italic')).pack(side = TOP, pady = 2)
+        ttk.Label(self.frame, text = "Cảnh báo - Màu cam", font = ('Times', 13,'italic')).pack(side = TOP, pady = 2)
+        ttk.Label(self.frame, text = "Lỗi - Màu đỏ", font = ('Times', 13,'italic')).pack(side = TOP, pady = 2)
 
 #Show main server
 class App:
@@ -143,7 +142,7 @@ def main():
     ttk.Label(root, text = "Server", font = ('Times', 20)).pack(side = TOP, pady = 5)
     ttk.Label(root, text = "Nhập số client cho phép kết nối đồng thời: ").pack(side = TOP, pady = 2)
     nVar = StringVar()
-    nEntry = ttk.Entry(root,textvariable= nVar, width = 20).pack(side = TOP, pady = 5)
+    ttk.Entry(root,textvariable= nVar, width = 20).pack(side = TOP, pady = 5)
     nFunc = partial(submitNumThread,root, nVar)
     ttk.Button(root, text = "Submit", command = nFunc).pack(side = TOP)
     root.mainloop()

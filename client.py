@@ -6,9 +6,6 @@ from functools import partial
 from socket import AF_INET, socket, SOCK_STREAM
 import socket
 import json
-import datetime
-from datetime import timedelta
-from datetime import datetime
 
 BUFF_SIZE = 1024
 
@@ -76,26 +73,11 @@ class adminGUI(object):
 
     #Update Rate
     def updateRate(self):
-        sendData(sclient, "UPDR")
-        messagebox.showinfo("Info", "Cập nhật hoàn tất")
-
-    
-    # #Choosen type event
-    # def option(self, event):
-    #     ch = self.TypeChoosen.get()
-    #     if (ch == self.choosenTypes[0]):
-    #         self.assistLabel.pack(side = TOP, pady = 2)
-    #         self.assistEntry.pack(side = TOP, pady = 5)
-    #         self.scoreLabel.pack(side = TOP, pady = 2)
-    #         self.scoreEntry.pack(side = TOP, pady = 5)
-    #     else:
-    #         self.assistLabel.pack(side = TOP, pady = 2)
-    #         self.assistEntry.pack(side = TOP, pady = 5)
-    #         self.scoreLabel.pack(side = TOP, pady = 2)
-    #         self.scoreEntry.pack(side = TOP, pady = 5)
-    #         self.assistLabel.pack_forget()
-    #         self.assistEntry.pack_forget()
-    #     return
+        flag = sendData(sclient, "UPDR")
+        if flag:
+            messagebox.showinfo("Info", "Cập nhật hoàn tất")
+        else:
+            messagebox.showerror("Error", "Cập nhật thất bại")
 
 #User
 class userGUI(object):
@@ -105,7 +87,7 @@ class userGUI(object):
         master.withdraw()
         self.master = Toplevel(master)
         self.master.title("TỶ GIÁ TIỀN TỆ") 
-        self.master.geometry("700x400") 
+        self.master.geometry("700x650") 
         self.master.resizable(0, 0)
         self.sclient = sclient
         Label(self.master, text = "NGÂN HÀNG NHÀ NƯỚC VIỆT NAM", fg = 'red',font = ('Times', 20)).pack(side = TOP, pady = 5)
@@ -117,29 +99,30 @@ class userGUI(object):
         self.middleFrame = Frame(self.master)
         self.middleFrame.pack(side = TOP, pady = 2, padx = 5)
         Label(self.middleFrame, text = "Loại ngoại tệ", font = ('Time', 11, 'bold')).pack(side = LEFT, padx = 2)
-        self.IDMVar = StringVar()
-        self.IDMVar.set("USD")
-        IDMEntry = Entry(self.middleFrame,textvariable= self.IDMVar, width = 50).pack(side = LEFT, padx = 2)
+        self.CurVar = StringVar()
+        self.CurVar.set("USD")
+        Entry(self.middleFrame,textvariable= self.CurVar, width = 50).pack(side = LEFT, padx = 2)
         Button(self.middleFrame, text = "Xem tỷ giá", command = self.showSpecificCurrency).pack(side = LEFT)
+        
+        #currency view
         self.bottomFrame = Frame(self.master)
-        self.bottomFrame.pack(side = TOP, fill = X )
-        self.treev = ttk.Treeview(self.bottomFrame, selectmode ='browse')
+        self.bottomFrame.pack(side = TOP, fill = X)
+        self.treev = ttk.Treeview(self.bottomFrame, selectmode ='browse', height = 20)
         self.treev.pack(side =TOP)
         verscrlbar = ttk.Scrollbar(self.bottomFrame, orient ="vertical", command = self.treev.yview)
         verscrlbar.pack(side ='right', fill ='x')
         self.treev.configure(xscrollcommand = verscrlbar.set)
-        self.treev["columns"] = ("1", "2", "3", "4", "5")
+        self.treev["columns"] = ("1", "2", "3", "4")
         self.treev['show'] = 'headings'
-        self.treev.column("1", width = 110, anchor ='c')
-        self.treev.column("2", width = 185, anchor ='se')
-        self.treev.column("3", width = 125, anchor ='se')
-        self.treev.column("4", width = 125, anchor ='se')
-        self.treev.column("5", width = 125, anchor ='se')
+        self.treev.column("1", width = 125, anchor ='c')
+        self.treev.column("2", width = 125, anchor ='e')
+        self.treev.column("3", width = 125, anchor ='e')
+        self.treev.column("4", width = 125, anchor ='e')
         self.treev.heading("1", text ="Loại")
-        self.treev.heading("2", text ="Tên đồng")
-        self.treev.heading("3", text ="Mua vào")
-        self.treev.heading("4", text = "Chuyển khoản")
-        self.treev.heading("5", text = "Bán ra")
+        self.treev.heading("2", text ="Mua vào")
+        self.treev.heading("3", text = "Chuyển khoản")
+        self.treev.heading("4", text = "Bán ra")
+        
         self.master.protocol("WM_DELETE_WINDOW", self.closeClient)
         self.master.mainloop()
 
@@ -152,6 +135,7 @@ class userGUI(object):
     #List match
     def ShowAllCurrencies(self):
         self.clearScreen()
+        self.CurVar.set("All")
         flag = sendData(self.sclient, "SAC")
         if not flag:
             messagebox.showerror("Error", "Server đã ngừng kết nối")
@@ -162,20 +146,30 @@ class userGUI(object):
             return
         data = json.loads(data)
         cnt = 0
-        for mtch in data["match"]:
-            realTime = datetime.now()
-            endTime = datetime.strptime(mtch["time"], '%Y-%m-%d %H:%M') + timedelta(minutes = 110) # 90 mins official + 5 mins added time + 15 mins between 2 half
-            if (realTime >= endTime):    # Trận đấu đã end
-                mtch["time"] = "FT"
-            else:   # Trận đấu chưa end
-                mtch["score"] = ""
-            self.treev.insert("", 'end', iid = cnt, text ="", values =(mtch['id'], mtch['time'], mtch['team1'], mtch['score'], mtch['team2']))
+        for currency in data["results"]:
+            self.treev.insert("", 'end', iid = cnt, text ="", values = (currency['currency'], currency['buy_cash'], currency['buy_transfer'], currency['sell'] ))
             cnt += 1
         return
 
     #show specific currency
     def showSpecificCurrency(self):
-        return
+        cur_name = self.CurVar.get()
+        self.clearScreen()
+        flag = sendData(self.sclient, "SSC")
+        if not flag:
+            messagebox.showerror("Error", "Server đã ngừng kết nối")
+            return
+        data = receive(sclient)
+        if (data == -100):
+            messagebox.showerror("Error", "Server đã ngừng kết nối")
+            return
+        if cur_name == "All": 
+            ShowAllCurrencies(self)
+        data = json.loads(data)
+        for currency in data["results"]:
+            if currency['currency'] == cur_name:
+                self.treev.insert("", 'end', iid = 0, text ="", values = (currency['currency'], currency['buy_cash'], currency['buy_transfer'], currency['sell'] ))
+                return       
     
     #Convert from one curency --> another
     def CurrencyConvertor(self):
@@ -360,7 +354,7 @@ class clientGUI(object):
         self.master = master
         self.sclient = sclient
         self.master.title("Client") 
-        self.master.geometry("400x200") 
+        self.master.geometry(f"400x200") 
         self.master.resizable(0, 0)
         Label(self.master, text = "TỶ GIÁ TIỀN TỆ", fg = 'blue',font = ('Times', 30, 'bold')).pack(side = TOP, pady = 5)
         Label(self.master, text = "Client", fg = 'blue',font = ('Times', 20)).pack(side = TOP, pady = 2)
