@@ -164,7 +164,7 @@ class userGUI(object):
             messagebox.showerror("Error", "Server đã ngừng kết nối")
             return
         if cur_name == "All": 
-            ShowAllCurrencies(self)
+            self.ShowAllCurrencies()
         data = json.loads(data)
         for currency in data["results"]:
             if currency['currency'] == cur_name:
