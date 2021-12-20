@@ -9,6 +9,10 @@ from tkinter import ttk, VERTICAL, HORIZONTAL, N, S, E, W
 from functools import partial
 from server import*
 
+# screen_width = win.winfo_screenwidth()
+# screen_height = win.winfo_screenheight()
+# screen_size = str(screen_width) + 'x' + str(screen_height)
+
 logger = logging.getLogger(__name__)
 
 NClient = 5                  
@@ -69,7 +73,7 @@ class InfoUi:
 
     def __init__(self, frame):
         self.frame = frame
-        ttk.Label(self.frame, text = "LIVE SCORE", font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
+        ttk.Label(self.frame, text = "MONEY EXCHANGE", font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
         ttk.Label(self.frame, text = "Server", font = ('Times', 20)).pack (side = TOP, pady = 10)
         ttk.Label(self.frame, text = "Thông tin hiển thị:", font = ('Times', 13)).pack(side = TOP, pady = 2)
         ttk.Label(self.frame, text = "Thông tin từ server - Black", font = ('Times', 13,'italic')).pack(side = TOP, pady = 2)
@@ -86,10 +90,11 @@ class App:
         global NClient
         self.root = root
         root.title('Server Console')
-        root.geometry("1000x500")
+        root.geometry("1200x600")
         root.resizable(0,0)
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0, weight=1)
+        
         # Create the panes and frames
         vertical_pane = ttk.PanedWindow(self.root, orient=VERTICAL)
         vertical_pane.grid(row=0, column=0, sticky="nsew")
@@ -102,6 +107,7 @@ class App:
         console_frame.columnconfigure(0, weight=1)
         console_frame.rowconfigure(0, weight=1)
         horizontal_pane.add(console_frame, weight=1)
+        
         # Initialize all frames
         self.form = InfoUi(form_frame)
         self.console = ConsoleUi(console_frame)
@@ -137,7 +143,7 @@ def main():
     ttk.Label(root, text = "Server", font = ('Times', 20)).pack(side = TOP, pady = 5)
     ttk.Label(root, text = "Nhập số client cho phép kết nối đồng thời: ").pack(side = TOP, pady = 2)
     nVar = StringVar()
-    nEntry = ttk.Entry(root,textvariable= nVar, width = 50).pack(side = TOP, pady = 5)
+    nEntry = ttk.Entry(root,textvariable= nVar, width = 20).pack(side = TOP, pady = 5)
     nFunc = partial(submitNumThread,root, nVar)
     ttk.Button(root, text = "Submit", command = nFunc).pack(side = TOP)
     root.mainloop()

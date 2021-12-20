@@ -10,6 +10,8 @@ import json
 import datetime
 from datetime import timedelta
 from datetime import datetime
+import urllib.request
+
 BUFF_SIZE = 1024
 
 #Create socket
@@ -58,10 +60,10 @@ class adminGUI(object):
         self.master.title("Client admin") 
         self.master.geometry("500x350") 
         self.master.resizable(0, 0)
-        Label(self.master, text = "TỶ SỐ VÀNG", fg = 'blue',font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
+        Label(self.master, text = "TỶ GÍA VÀNG", fg = 'blue',font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
         Label(self.master, text = "ADMIN", fg = 'blue',font = ('Times', 20)).pack(side = TOP, pady = 7)
         #Button(self.master, text = "Tra cứu", height = 2, width = 30, command = self.addMatchGUI).pack(side = TOP, pady = 2)
-        Button(self.master, text = "Cập nhật thời gian và tỉ số", height = 2, width = 30, command = self.upMatchGUI).pack(side = TOP, pady = 2)
+        Button(self.master, text = "Cập nhật thời gian và TỈ GIÁ", height = 2, width = 30, command = self.upMatchGUI).pack(side = TOP, pady = 2)
         Button(self.master, text = "Cập nhật event", height = 2, width = 30, command = self.upEventGUI).pack(side = TOP, pady = 2)
         self.master.protocol("WM_DELETE_WINDOW", self.closeClient)
         self.master.mainloop()
@@ -271,23 +273,23 @@ class userGUI(object):
     def __init__(self, master):
         master.withdraw()
         self.master = Toplevel(master)
-        self.master.title("DANH SÁCH TRẬN ĐẤU") 
+        self.master.title("TỶ GIÁ TIỀN TỆ") 
         self.master.geometry("700x400") 
         self.master.resizable(0, 0)
         self.sclient = sclient
-        Label(self.master, text = "LIVE SCORE", fg = 'blue',font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
-        Label(self.master, text = "LIST SCORE", fg = 'blue',font = ('Times', 20)).pack(side = TOP, pady = 5)
+        Label(self.master, text = "NGÂN HÀNG NHÀ NƯỚC VIỆT NAM", fg = 'red',font = ('Times', 20)).pack(side = TOP, pady = 5)
+        Label(self.master, text = "TỶ GIÁ TIỀN TỆ", fg = 'brown',font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
         self.topFrame = Frame(self.master)
         self.topFrame.pack(side = TOP, pady = 2, padx = 5)
-        Button(self.topFrame, text = "List Match", command = self.listMatch).pack(side = LEFT, padx = 10)
-        Button(self.topFrame, text = "List Match RealTime", command = self.listMatchRealTime).pack(side = LEFT, pady = 5)
+        Button(self.topFrame, text = "Chuyển đổi giữa các ngoại tệ", command = self.CurrencyConvertor).pack(side = LEFT, padx = 10)
+        Button(self.topFrame, text = "Hiển thị tất cả tỉ giá ngoại tệ (so với VND)", command = self.ShowAllCurrencies).pack(side = LEFT, pady = 5)
         self.middleFrame = Frame(self.master)
         self.middleFrame.pack(side = TOP, pady = 2, padx = 5)
-        Label(self.middleFrame, text = "Match detail", font = ('Time', 11, 'bold')).pack(side = LEFT, padx = 2)
+        Label(self.middleFrame, text = "Loại ngoại tệ", font = ('Time', 11, 'bold')).pack(side = LEFT, padx = 2)
         self.IDMVar = StringVar()
-        self.IDMVar.set("Nhập ID Match")
+        self.IDMVar.set("USD")
         IDMEntry = Entry(self.middleFrame,textvariable= self.IDMVar, width = 50).pack(side = LEFT, padx = 2)
-        Button(self.middleFrame, text = "Xem", command = self.matchDetailGUI).pack(side = LEFT)
+        Button(self.middleFrame, text = "Xem tỷ giá", command = self.matchDetailGUI).pack(side = LEFT)
         self.bottomFrame = Frame(self.master)
         self.bottomFrame.pack(side = TOP, fill = X )
         self.treev = ttk.Treeview(self.bottomFrame, selectmode ='browse')
@@ -298,15 +300,15 @@ class userGUI(object):
         self.treev["columns"] = ("1", "2", "3", "4", "5")
         self.treev['show'] = 'headings'
         self.treev.column("1", width = 110, anchor ='c')
-        self.treev.column("2", width = 120, anchor ='se')
-        self.treev.column("3", width = 160, anchor ='se')
-        self.treev.column("4", width = 120, anchor ='se')
-        self.treev.column("5", width = 160, anchor ='se')
-        self.treev.heading("1", text ="ID Score")
-        self.treev.heading("2", text ="Time")
-        self.treev.heading("3", text ="Team 1")
-        self.treev.heading("4", text = "Score")
-        self.treev.heading("5", text = "Team 2")
+        self.treev.column("2", width = 185, anchor ='se')
+        self.treev.column("3", width = 125, anchor ='se')
+        self.treev.column("4", width = 125, anchor ='se')
+        self.treev.column("5", width = 125, anchor ='se')
+        self.treev.heading("1", text ="Loại")
+        self.treev.heading("2", text ="Tên đồng")
+        self.treev.heading("3", text ="Mua vào")
+        self.treev.heading("4", text = "Chuyển khoản")
+        self.treev.heading("5", text = "Bán ra")
         self.master.protocol("WM_DELETE_WINDOW", self.closeClient)
         self.master.mainloop()
 
@@ -317,7 +319,7 @@ class userGUI(object):
         return 
 
     #List match
-    def listMatch(self):
+    def ShowAllCurrencies(self):
         self.clearScreen()
         flag = sendData(self.sclient, "LISTMT")
         if not flag:
@@ -341,7 +343,7 @@ class userGUI(object):
         return
 
     #List match realtime
-    def listMatchRealTime(self):
+    def CurrencyConvertor(self):
         self.clearScreen()
         flag = sendData(self.sclient, "LISTMRT")
         if not flag:
@@ -449,23 +451,25 @@ class logInGUI(object):
         self.master.title("Client") 
         self.master.geometry("800x500") 
         self.master.resizable(0, 0)
+        #CLIENT LOGIN IMAGE
+        urllib.request.urlretrieve("https://i.ibb.co/L0zqG1F/client.jpg", "client.jpg")
         self.img = Image.open("client.jpg")
         img1 = self.img.resize((800, 500), Image.ANTIALIAS)
         self.bg = ImageTk.PhotoImage(img1)
         self.bgImage = Label(self.master,image=self.bg).place(x=0,y=0,relwidth=1,relheight=1)
-        self.loginLabel = Label(self.master, text = "LOG IN",bg = 'white', fg = 'blue',font = ('Times', 30, 'bold'))
+        self.loginLabel = Label(self.master, text = "LOGIN", bg = 'white', fg = 'blue',font = ('Times', 30, 'bold'))
         self.loginLabel.place(x = 170, y = 180)
-        self.userLabel = Label(self.master, text = "User Name: ",bg = 'white', font = ('Times', 12, 'bold'))
+        self.userLabel = Label(self.master, text = " User Name:", bg = 'white', font = ('Times', 12, 'bold'))
         self.userLabel.place(x = 70, y = 250)
         self.userVar = StringVar()
         self.userEntry = Entry(self.master,textvariable= self.userVar,font = ('Times', 12, 'bold'), width = 30, bg = "white")
         self.userEntry.place(x = 160, y = 250)
         self.passVar = StringVar()
-        self.passLabel = Label(self.master, text = "Password: ",bg = 'white', font = ('Times', 12, 'bold'))
+        self.passLabel = Label(self.master, text = "    Password:",bg = 'white', font = ('Times', 12, 'bold'))
         self.passLabel.place(x = 70, y = 280)
-        self.passEntry = Entry(self.master,textvariable= self.passVar,show = "*",font = ('Times', 12, 'bold'), width = 30, bg = "white")
+        self.passEntry = Entry(self.master,textvariable= self.passVar,show = "*",font = ('Times', 12, 'bold'), width = 30, bg = 'white')
         self.passEntry.place(x = 160, y = 280)
-        self.logInButton = Button(self.master, text = "LOG IN", width = 10, height = 1,font = ('Times', 12, 'bold'), command = self.logIn)
+        self.logInButton = Button(self.master, text = "LOGIN", width = 10, height = 1,font = ('Times', 12, 'bold'), command = self.logIn)
         self.logInButton.place( x = 200, y = 320)
         self.regist1Label = Label(self.master, text = "Nếu bạn chưa có tài khoản",bg = 'white', font = ('Times', 12, 'italic'))
         self.regist1Label.place(x = 150, y = 390)
@@ -578,7 +582,7 @@ class logInGUI(object):
         self.regist1Label.place(x = 150, y = 390)
         self.regist1Button.place(x = 200, y = 420)
 
-#Client main
+#Client GUI main
 class clientGUI(object):
     def __init__(self, master):
         self.master = master
@@ -586,11 +590,12 @@ class clientGUI(object):
         self.master.title("Client") 
         self.master.geometry("400x200") 
         self.master.resizable(0, 0)
-        Label(self.master, text = "Tỷ giá tiền tệ", fg = 'blue',font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
-        Label(self.master, text = "Client", fg = 'blue',font = ('Times', 20)).pack(side = TOP, pady = 5)
+        Label(self.master, text = "TỶ GIÁ TIỀN TỆ", fg = 'blue',font = ('Times', 30, 'bold')).pack(side = TOP, pady = 5)
+        Label(self.master, text = "Client", fg = 'blue',font = ('Times', 20)).pack(side = TOP, pady = 2)
+        Label(self.master, text = "Nhập ip", fg = 'black',font = ('Times', 10)).pack(side = TOP, pady = 2)
         hostVar = StringVar()
-        hostVar.set("Nhập IP")
-        hostEntry = Entry(self.master,textvariable=hostVar, width = 50).pack(side = TOP, pady = 2)
+        hostVar.set("")
+        hostEntry = Entry(self.master,textvariable=hostVar, width = 30).pack(side = TOP, pady = 2)
         submittedHost = hostVar.get()
         connectFunc = partial(self.connectServer,hostVar)
         Button(self.master, text = "Connect to Server", command = connectFunc).pack(side = TOP, pady = 2)
@@ -610,7 +615,6 @@ class clientGUI(object):
         messagebox.showinfo("Info", "Kết nối đến server thành công")
         logInGUI(self.master)
         return True
-
 
 #Main
 if __name__ == "__main__":

@@ -3,6 +3,8 @@ import json
 from _thread import *
 import logging
 from serverGUI import*
+import urllib.request
+import json
 
 hostname = socket.gethostname()
 HOST = socket.gethostbyname(hostname) 
@@ -142,8 +144,10 @@ class Server:
         fd.close()
         return True
 
+#////////////////////////////////////////////////
+#SUA PHAN O DUOI NAY DE LAY THONG TIN TIEN TE va gui den client 
     #Match detail
-    def matchDetail(self,sock):
+    def CurrencyConvertor (self,sock):
         id = self.receive(sock)
         client_number = self.port_num_clients[sock.getpeername()[1]]
         self.logger.log(logging.CRITICAL,"Client " + str(client_number) + ": ID trận đấu cần mở: " + id)
@@ -169,7 +173,7 @@ class Server:
             return False
 
     #List Match
-    def listMatch(self,sock):
+    def ShowAllCurrencies(self,sock):
         client_number = self.port_num_clients[sock.getpeername()[1]]
         f = open("matchDetail.json", "r")
         data = json.load(f)
@@ -178,9 +182,9 @@ class Server:
         self.logger.log(logging.INFO,"Client " + str(client_number) + ": Mở danh sách trận đấu thành công")
         #self.sendData(sock, '0')
         return False
+#///////////////////////////////////////////////
         
     ### ADMIN ###
-
     # Thêm event
     def upEvent(self, sock):   
         client_number = self.port_num_clients[sock.getpeername()[1]]
