@@ -99,7 +99,7 @@ class Server:
             self.sendData(sock, '2') # Admin đăng nhập thành công
             self.logger.log(logging.INFO,"Client " + str(client_number) + ": Đăng nhập admin thành công")
             return 2    
-        fd = open("account.json", "r")
+        fd = open("./Data/account.json", "r")
         accs = json.loads(fd.read())
         fd.close()
         for acc in accs["account"]:
@@ -124,7 +124,7 @@ class Server:
         sub = json.loads(sub)
         client_number = self.port_num_clients[sock.getpeername()[1]]
         self.logger.log(logging.INFO,"Client " + str(client_number) + ". Usr:" + sub['usr'] + " - Pass:" + sub['psw']) 
-        fd = open("account.json", "r+")
+        fd = open("./Data/account.json", "r+")
         userExist = False
         accs = json.loads(fd.read())
         for acc in accs["account"]:
@@ -153,7 +153,7 @@ class Server:
     
         request = "https://vapi.vnappmob.com/api/v2/exchange_rate/bid?api_key=" + str(API_key)
         recieve = requests.get(request).json()
-        with open('Currency-Rate.json', 'w', encoding='utf-8') as _file_:
+        with open('./Data/Currency-Rate.json', 'w', encoding='utf-8') as _file_:
             json.dump(recieve, _file_, ensure_ascii=False, indent=4)
         self.logger.log(logging.INFO,"Admin từ client " + str(client_number) + ": vừa cập nhật tỷ giá hối đoái")
         return True
@@ -165,7 +165,7 @@ class Server:
         client_number = self.port_num_clients[sock.getpeername()[1]]
         
         self.logger.log(logging.CRITICAL,"Client " + str(client_number) + ": loại tiền tệ " + id)
-        f = open("Currency-Rate.json", "r")
+        f = open("./Data/Currency-Rate.json", "r")
         data = json.load(f)
         f.close()
 
@@ -189,7 +189,7 @@ class Server:
     #show all currency rate
     def ShowAllCurrencies(self,sock):
         client_number = self.port_num_clients[sock.getpeername()[1]]
-        f = open("Currency-Rate.json", "r")
+        f = open("./Data/Currency-Rate.json", "r")
         data = json.load(f)
         f.close()
         self.sendData(sock, json.dumps(data))
@@ -198,7 +198,7 @@ class Server:
         
     def showSpecificCurrency(self, sock):
         client_number = self.port_num_clients[sock.getpeername()[1]]
-        f = open("Currency-Rate.json", "r")
+        f = open("./Data/Currency-Rate.json", "r")
         data = json.load(f)
         f.close()
         self.sendData(sock, json.dumps(data))
