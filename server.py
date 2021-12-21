@@ -44,7 +44,7 @@ class Server:
                 self.port_num_clients[addr[1]] = self.threadCount
                 self.logger.log(logging.INFO,"Client number: " + str(self.threadCount) + " connected. Address: " + str(addr))
             except socket.error:
-                #print("close")
+                print("cannot create socket")
                 break
 
     #Open server
@@ -88,7 +88,18 @@ class Server:
             if data:
                 break
         return data.decode().strip()
+    
+    #update json data
+    def UpdateJsonData(self):
+        url = "https://vapi.vnappmob.com/api/request_api_key?scope=exchange_rate"
+        API_data = requests.get(url).json();
+        API_key = API_data["results"]
 
+        request = "https://vapi.vnappmob.com/api/v2/exchange_rate/bid?api_key=" + str(API_key)
+        recieve = requests.get(request).json()
+        with open('./Data/Currency-Rate.json', 'w', encoding='utf-8') as _file_:
+            json.dump(recieve, _file_, ensure_ascii=False, indent=4)
+    
     # Đăng nhập
     def login(self,sock):
         sub = self.receiveData(sock)
@@ -144,68 +155,38 @@ class Server:
         fd.close()
         return True
 
+    #load currency data from json and send back, log to server
+    def DataSendBack(self, sock, message):
+        client_number = self.port_num_clients[sock.getpeername()[1]]
+        f = open("./Data/Currency-Rate.json", "r")
+        data = json.load(f)
+        f.close()
+        self.sendData(sock, json.dumps(data))
+        self.logger.log(logging.INFO,"Client " + str(client_number) + message)
+
     def updateCurrencyRate(self, sock):
         client_number = self.port_num_clients[sock.getpeername()[1]]
-        #get data from API
-        url = "https://vapi.vnappmob.com/api/request_api_key?scope=exchange_rate"
-        API_data = requests.get(url).json();
-        API_key = API_data["results"]
-    
-        request = "https://vapi.vnappmob.com/api/v2/exchange_rate/bid?api_key=" + str(API_key)
-        recieve = requests.get(request).json()
-        with open('./Data/Currency-Rate.json', 'w', encoding='utf-8') as _file_:
-            json.dump(recieve, _file_, ensure_ascii=False, indent=4)
-        self.logger.log(logging.INFO,"Admin từ client " + str(client_number) + ": vừa cập nhật tỷ giá hối đoái")
+        self.UpdateJsonData()
+        self.logger.log(logging.INFO,"Admin (client " + str(client_number) + "): vừa cập nhật tỷ giá hối đoái")
         return True
 
     #convert amount of money to another one
-    def CurrencyConvertor (self,sock):
-        #recieve socket
-        id = self.receiveData(sock)
-        client_number = self.port_num_clients[sock.getpeername()[1]]
-        
-        self.logger.log(logging.CRITICAL,"Client " + str(client_number) + ": loại tiền tệ " + id)
-        f = open("./Data/Currency-Rate.json", "r")
-        data = json.load(f)
-        f.close()
-
-        pos = -1
-
-        for i in range(0,len(data["results"])):
-            if (data["match"][i]["id"] == id):
-                pos = i
-
-        if (pos != -1):
-            res = data["match"][pos]
-            res["events"] = data["match"][pos]["events"]
-            self.sendData(sock, json.dumps(res))
-            self.logger.log(logging.INFO,"Client " + str(client_number) + ": Mở chi tiết trận đấu thành công")
-            return True
-        else:
-            self.sendData(sock, '0') # Khong ton tai match detail
-            self.logger.log(logging.ERROR,"Client " + str(client_number) + ": Không tồn tại id trận đấu")
-            return False
+    def CurrencyConvertor(self,sock):
+        message = ": vừa dùng công cụ chuyển đổi ngoại tệ"
+        self.DataSendBack(sock, message)
+        return False
 
     #show all currency rate
     def ShowAllCurrencies(self,sock):
-        client_number = self.port_num_clients[sock.getpeername()[1]]
-        f = open("./Data/Currency-Rate.json", "r")
-        data = json.load(f)
-        f.close()
-        self.sendData(sock, json.dumps(data))
-        self.logger.log(logging.INFO,"Client " + str(client_number) + ": vừa xem danh sách tổng hợp tỷ giá hối đoái")
+        message = ": vừa xem danh sách tổng hợp tỷ giá hối đoái"
+        self.DataSendBack(sock, message)
         return False
-        
+
+    #show a specific currency rate to VND   
     def showSpecificCurrency(self, sock):
-        client_number = self.port_num_clients[sock.getpeername()[1]]
-        f = open("./Data/Currency-Rate.json", "r")
-        data = json.load(f)
-        f.close()
-        self.sendData(sock, json.dumps(data))
-        self.logger.log(logging.INFO,"Client " + str(client_number) + ": vừa xem một tỷ giá hối đoái")
+        message = ": vừa xem một tỷ giá hối đoái"
+        self.DataSendBack(sock, message)
         return False
-    
-    ### ADMIN ###
 
     #Client Quit
     def clientQuit(self, sock):
@@ -230,8 +211,8 @@ class Server:
                         self.logger.log(logging.DEBUG,str)
                         if (str == "UPDR"):
                             self.updateCurrencyRate(conn)
-                        elif (str == "UPDEV"):
-                            self.upEvent(conn)
+                        elif (str == "ShAll"):
+                            self.ShowAllCurrencies(conn)
                         else:
                             self.clientQuit(conn)
                             return
@@ -242,7 +223,7 @@ class Server:
                         if (str == "SAC"):
                             self.ShowAllCurrencies(conn)
                         elif (str == "CRC"):
-                            self.convert(conn)
+                            self.CurrencyConvertor(conn)
                         elif (str == "SSC"):
                             self.showSpecificCurrency(conn)
                         else:
