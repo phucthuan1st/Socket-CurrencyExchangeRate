@@ -15,6 +15,10 @@
         {
             "usr": "thuan",
             "psw": "thuan"
+        },
+        {
+            "usr": "tester",
+            "psw": "test"
         }
     ]
 }

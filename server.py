@@ -48,7 +48,7 @@ class Server:
                 start_new_thread(self.threadClient, (client, ))
                 self.threadCount += 1
                 self.port_num_clients[addr[1]] = self.threadCount
-                self.logger.log(logging.INFO,"Client number: " + str(self.threadCount) + " connected. Address: " + str(addr))
+                self.logger.log(logging.CRITICAL,"Client number: " + str(self.threadCount) + " connected. Address: " + str(addr))
             except socket.error:
                 print("cannot create socket")
                 break
@@ -167,7 +167,7 @@ class Server:
             fd.seek(0)
             json.dump(accs, fd, indent = 4)
             self.sendData(sock, '1') # Đăng ký thành công
-            self.logger.log(logging.INFO,"Client " + str(client_number) + ": Đăng ký thành công")
+            self.logger.log(logging.CRITICAL,"Client " + str(client_number) + ": Đăng ký thành công")
         fd.close()
         return True
 
