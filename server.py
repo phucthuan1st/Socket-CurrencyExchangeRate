@@ -186,7 +186,6 @@ class Server:
         self.updateJsonData()
         self.logger.log(logging.INFO,"Admin: vừa cập nhật tỷ giá hối đoái")
         self.logger.log(logging.DEBUG,"Client [" + str(client_number) + "] đã nhận")
-        self.sendData(sock, 0)
         return True
 
     #convert amount of money to another one
