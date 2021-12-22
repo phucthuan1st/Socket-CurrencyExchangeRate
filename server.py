@@ -110,7 +110,7 @@ class Server:
         API_data = requests.get(url).json();
         API_key = API_data["results"]
 
-        request = "https://vapi.vnappmob.com/api/v2/exchange_rate/bid?api_key=" + str(API_key)
+        request = "https://vapi.vnappmob.com/api/v2/exchange_rate/vcbapi_key=" + str(API_key)
         recieve = requests.get(request).json()
         with open('./Data/Currency-Rate.json', 'w', encoding='utf-8') as _file_:
             json.dump(recieve, _file_, ensure_ascii=False, indent=4)
