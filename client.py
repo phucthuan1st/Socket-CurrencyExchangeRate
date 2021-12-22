@@ -64,6 +64,48 @@ class adminGUI(object):
 
     #show current currency
     def showCurrentCurrency(self):
+        self.master1 = Toplevel(self.master)
+        self.master1.title("TỶ GIÁ HỐI ĐOÁI HIỆN TẠI")
+        self.master1.geometry("600x600")
+        self.master1.resizable(0, 0)
+        Label(self.master1, text = "XEM TỶ GIÁ HỐI ĐOÁI HIỆN TẠI", fg = 'blue',font = ('Times', 20, 'bold')).pack(side = TOP, pady = 5)
+        Label(self.master1, text = "Tỷ giá đang lưu trong dữ liệu", fg = 'brown',font = ('Times', 15)).pack(side = TOP, pady = 5)
+        
+        #draw and print result to screen
+        self.bottomFrame = Frame(self.master1)
+        self.bottomFrame.pack(side = TOP, fill = X )
+        self.bottomFrame.place(x = 60,y = 100)
+        self.treev1 = ttk.Treeview(self.bottomFrame, selectmode ='browse', height = 20)
+        self.treev1.pack(side =TOP)
+        verscrlbar = ttk.Scrollbar(self.bottomFrame, orient ="vertical", command = self.treev1.yview)
+        verscrlbar.pack(side ='top', fill ='x')
+        self.treev1.configure(xscrollcommand = verscrlbar.set)
+        self.treev1["columns"] = ("1", "2", "3", "4")
+        self.treev1['show'] = 'headings'
+        self.treev1.column("1", width = 120, anchor ='c')
+        self.treev1.column("2", width = 120, anchor ='se')
+        self.treev1.column("3", width = 120, anchor ='se')
+        self.treev1.column("4", width = 120, anchor ='se')
+
+        self.treev1.heading("1", text ="Tên đồng")
+        self.treev1.heading("2", text ="Mua vào")
+        self.treev1.heading("3", text ="Chuyển khoản")
+        self.treev1.heading("4", text = "Bán ra")
+        
+        flag = sendData(self.sclient, "ShAll")
+        if not flag:
+            messagebox.showerror("Error", "Server đã ngừng kết nối")
+            return
+        data = receive(sclient)
+        if (data == -100):
+            messagebox.showerror("Error", "Server đã ngừng kết nối")
+            return
+        data = json.loads(data)
+        cnt = 0
+        for currency in data["results"]:
+            self.treev1.insert("", 'end', iid = cnt, text ="", values = (currency['currency'], currency['buy_cash'], currency['buy_transfer'], currency['sell'] ))
+            cnt += 1
+        self.master1.mainloop()
         return
 
     #CloseClient
