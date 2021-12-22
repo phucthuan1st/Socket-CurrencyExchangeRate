@@ -6,7 +6,6 @@ from functools import partial
 from socket import AF_INET, socket, SOCK_STREAM
 import socket
 import json
-import time
 
 BUFF_SIZE = 1024
 
@@ -63,6 +62,7 @@ class adminGUI(object):
         self.master.protocol("WM_DELETE_WINDOW", self.closeClient)
         self.master.mainloop()
 
+    #show current currency
     def showCurrentCurrency(self):
         return
 
@@ -122,19 +122,18 @@ class userGUI(object):
         self.treev.heading("2", text ="Mua vào")
         self.treev.heading("3", text = "Chuyển khoản")
         self.treev.heading("4", text = "Bán ra")
-        self.execute_time = time.time()
         self.master.protocol("WM_DELETE_WINDOW", self.closeClient)
-        self.master.mainloop()
-
+        self.master.mainloop()    
+    
     #Delete showed list match 
-    def clearScreen(self):
+    def clearTreeView(self):
         for rec in self.treev.get_children():
             self.treev.delete(rec)
         return 
 
     #List match
     def ShowAllCurrencies(self):
-        self.clearScreen()
+        self.clearTreeView()
         self.CurVar.set("All")
         flag = sendData(self.sclient, "SAC")
         if not flag:
@@ -154,7 +153,7 @@ class userGUI(object):
     #show specific currency
     def showSpecificCurrency(self):
         cur_name = self.CurVar.get()
-        self.clearScreen()
+        self.clearTreeView()
         flag = sendData(self.sclient, "SSC")
         if not flag:
             messagebox.showerror("Error", "Server đã ngừng kết nối")
@@ -173,7 +172,7 @@ class userGUI(object):
     
     #Convert from one curency --> another
     def CurrencyConvertor(self):
-        self.clearScreen()
+        self.clearTreeView()
         self.master1 = Toplevel(self.master)
         self.master1.title("Chuyển đổi tiền tệ")
         self.master1.geometry("500x500")
@@ -229,6 +228,7 @@ class userGUI(object):
         self.master1.mainloop()
         return
 
+    #print the exchange réult to treeview
     def showExchangeResult(self):
 
         flag = sendData(self.sclient, "CRC")
@@ -244,29 +244,32 @@ class userGUI(object):
         fromCur = self.fromVar.get()
         fromValue = int(self.fromValueVar.get())
         toCur = self.toVar.get()
-        toRate = 1
-        fromRate = 1
+        toRate = 0
+        fromRate = 0
         
         for currency in data["results"]:
             if currency["currency"] == fromCur:
                 fromRate = int(currency["buy_transfer"])
             if currency["currency"] == toCur:
                 toRate = int(currency["buy_transfer"])
-        if toCur == "VND": 
-            self.treev1.insert("", 'end', iid = self.exchangeTimes, text ="", values = (fromCur, fromValue, toCur, fromRate*fromValue))
-            self.exchangeTimes += 1
-        elif fromRate == 1 or toRate == 1:
-            if fromRate == toRate:
-                cur = fromCur + " và " + toCur
-            elif fromRate == 1:
-                cur = fromCur
-            else:
-                cur = toCur
-            messagebox.showerror("Error", "Chưa có dữ liệu về đồng ngoại tệ :" + cur)
-        else:   
-            toValue = round(fromValue*fromRate/toRate,1)
-            self.treev1.insert("", 'end', iid = self.exchangeTimes, text ="", values = (fromCur, fromValue, toCur, toValue))
-            self.exchangeTimes += 1
+        if fromCur != toCur:
+            if toCur == "VND":
+                toRate = 1
+            if fromCur == "VND":
+                fromRate = 1
+            
+            if fromRate == 0 or toRate == 0:
+                if fromRate == toRate:
+                    cur = fromCur + " và " + toCur
+                elif fromRate == 1:
+                    cur = fromCur
+                else:
+                    cur = toCur
+                messagebox.showerror("Error", "Chưa có dữ liệu về đồng ngoại tệ :" + cur)
+            else:   
+                toValue = round(fromValue*fromRate/toRate,1)
+                self.treev1.insert("", 'end', iid = self.exchangeTimes, text ="", values = (fromCur, fromValue, toCur, toValue))
+                self.exchangeTimes += 1
 
     #CloseClient
     def closeClient(self):

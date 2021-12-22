@@ -5,6 +5,9 @@ import logging
 from serverGUI import*
 import json
 import requests
+import schedule
+import time
+import threading
 
 hostname = socket.gethostname()
 HOST = socket.gethostbyname(hostname) 
@@ -31,6 +34,9 @@ class Server:
         self.sock_clients = []
         self.port_num_clients = {}
         self.isOpen = False
+        self.schedule = schedule.every(15).minutes.do(self.updateJsonData)
+        self.autoUpdateThread = threading.Thread(target = self.autoUpdate)
+        self.autoUpdate = True
         self.openServer()
 
     #Thread server
@@ -53,15 +59,19 @@ class Server:
             self.logger.log(logging.INFO,"Server đã mở!.")
             self.logger.log(logging.INFO,"Cho phép tối đa " + str(self.NClient) + " client kết nối đồng thời.")
             self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.autoUpdateThread.start()
             self.s.bind((HOST, PORT))
             self.s.listen(self.NClient)
             self.isOpen = True
-            start_new_thread(self.threadServer, ())
+            start_new_thread(self.threadServer, ())          
                 
     #Close server
     def closeServer(self):
         self.isOpen = False
         self.s.close()
+        self.autoUpdate = False
+        self.autoUpdateThread.join()
+        schedule.clear()
         for sock in self.sock_clients:
             if sock:
                 sock.close()
@@ -89,8 +99,13 @@ class Server:
                 break
         return data.decode().strip()
     
+    def autoUpdate(self):
+        while self.autoUpdate:
+            schedule.run_pending()
+            time.sleep(1)
+    
     #update json data
-    def UpdateJsonData(self):
+    def updateJsonData(self):
         url = "https://vapi.vnappmob.com/api/request_api_key?scope=exchange_rate"
         API_data = requests.get(url).json();
         API_key = API_data["results"]
@@ -99,6 +114,7 @@ class Server:
         recieve = requests.get(request).json()
         with open('./Data/Currency-Rate.json', 'w', encoding='utf-8') as _file_:
             json.dump(recieve, _file_, ensure_ascii=False, indent=4)
+        self.logger.log(logging.INFO,"Dữ liệu đã được cập nhật")
     
     # Đăng nhập
     def login(self,sock):
@@ -134,7 +150,7 @@ class Server:
         sub = self.receiveData(sock)
         sub = json.loads(sub)
         client_number = self.port_num_clients[sock.getpeername()[1]]
-        self.logger.log(logging.INFO,"Client " + str(client_number) + ". Usr:" + sub['usr'] + " - Pass:" + sub['psw']) 
+        self.logger.log(logging.CRITICAL, "Regist request from client " + str(client_number) + ". Usr:" + sub['usr'] + " - Pass:" + sub['psw']) 
         fd = open("./Data/account.json", "r+")
         userExist = False
         accs = json.loads(fd.read())
@@ -162,12 +178,15 @@ class Server:
         data = json.load(f)
         f.close()
         self.sendData(sock, json.dumps(data))
-        self.logger.log(logging.INFO,"Client " + str(client_number) + message)
+        self.logger.log(logging.DEBUG,"Client " + str(client_number) + message)
 
+    #update json and data
     def updateCurrencyRate(self, sock):
         client_number = self.port_num_clients[sock.getpeername()[1]]
-        self.UpdateJsonData()
-        self.logger.log(logging.INFO,"Admin (client " + str(client_number) + "): vừa cập nhật tỷ giá hối đoái")
+        self.updateJsonData()
+        self.logger.log(logging.INFO,"Admin: vừa cập nhật tỷ giá hối đoái")
+        self.logger.log(logging.DEBUG,"Client [" + str(client_number) + "] đã nhận")
+        self.sendData(sock, 0)
         return True
 
     #convert amount of money to another one
