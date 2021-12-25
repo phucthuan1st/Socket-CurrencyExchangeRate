@@ -139,6 +139,7 @@ class userGUI(object):
         self.topFrame.pack(side = TOP, pady = 2, padx = 5)
         Button(self.topFrame, text = "Chuyển đổi giữa các ngoại tệ", command = self.CurrencyConvertor).pack(side = LEFT, padx = 10)
         Button(self.topFrame, text = "Hiển thị tất cả tỉ giá ngoại tệ (so với VND)", command = self.ShowAllCurrencies).pack(side = LEFT, pady = 5)
+        self.ListFile()
         self.middleFrame = Frame(self.master)
         self.middleFrame.pack(side = TOP, pady = 2, padx = 5)
         Label(self.middleFrame, text = "Loại ngoại tệ", font = ('Time', 11, 'bold')).pack(side = LEFT, padx = 2)
@@ -146,7 +147,8 @@ class userGUI(object):
         self.CurVar.set("USD")
         Entry(self.middleFrame,textvariable= self.CurVar, width = 50).pack(side = LEFT, padx = 2)
         Button(self.middleFrame, text = "Xem tỷ giá", command = self.showSpecificCurrency).pack(side = LEFT)
-        #currency view
+        
+        #currency tree view
         self.bottomFrame = Frame(self.master)
         self.bottomFrame.pack(side = TOP, fill = X)
         self.treev = ttk.Treeview(self.bottomFrame, selectmode ='browse', height = 20)
@@ -166,6 +168,23 @@ class userGUI(object):
         self.treev.heading("4", text = "Bán ra")
         self.master.protocol("WM_DELETE_WINDOW", self.closeClient)
         self.master.mainloop()    
+    
+    #show all file in data directory
+    def ListFile(self):
+        flag = sendData(self.sclient, "HIS")
+        if not flag:
+            messagebox.showerror("Error", "Server đã ngừng kết nối")
+            return
+        files = receive(sclient)
+        if (files == -100):
+            messagebox.showerror("Error", "Server đã ngừng kết nối")
+            return
+        self.options = files.split('.json')
+        self.options.pop()
+        self.showDate = StringVar()
+        self.showDate.set(self.options[-1])
+        OptionMenu(self.topFrame, self.showDate, *self.options).pack(side = LEFT, pady = 5)
+        return
     
     #Delete showed list match 
     def clearTreeView(self):

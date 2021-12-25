@@ -8,6 +8,9 @@ import requests
 import schedule
 import time
 import threading
+from datetime import date
+import os
+import re
 
 hostname = socket.gethostname()
 HOST = socket.gethostbyname(hostname) 
@@ -34,6 +37,7 @@ class Server:
         self.sock_clients = []
         self.port_num_clients = {}
         self.isOpen = False
+        self.updateJsonData()
         self.schedule = schedule.every(15).minutes.do(self.updateJsonData)
         self.autoUpdateThread = threading.Thread(target = self.autoUpdate)
         self.autoUpdate = True
@@ -99,6 +103,7 @@ class Server:
                 break
         return data.decode().strip()
     
+    #auto update data
     def autoUpdate(self):
         while self.autoUpdate:
             schedule.run_pending()
@@ -110,9 +115,10 @@ class Server:
         API_data = requests.get(url).json();
         API_key = API_data["results"]
 
-        request = "https://vapi.vnappmob.com/api/v2/exchange_rate/vcbapi_key=" + str(API_key)
+        request = "https://vapi.vnappmob.com/api/v2/exchange_rate/bid?api_key=" + str(API_key)
         recieve = requests.get(request).json()
-        with open('./Data/Currency-Rate.json', 'w', encoding='utf-8') as _file_:
+        file_name = str(date.today()) + '.json'
+        with open('./Data/Rate/' + file_name, 'w', encoding='utf-8') as _file_:
             json.dump(recieve, _file_, ensure_ascii=False, indent=4)
         self.logger.log(logging.INFO,"Dữ liệu đã được cập nhật")
     
@@ -174,11 +180,22 @@ class Server:
     #load currency data from json and send back, log to server
     def DataSendBack(self, sock, message):
         client_number = self.port_num_clients[sock.getpeername()[1]]
-        f = open("./Data/Currency-Rate.json", "r")
+        file_name = str(date.today()) + '.json'
+        f = open("./Data/Rate/" + file_name, "r")
         data = json.load(f)
         f.close()
         self.sendData(sock, json.dumps(data))
         self.logger.log(logging.DEBUG,"Client " + str(client_number) + message)
+
+    #send json history in data directory
+    def SendJsonHistory(self, sock):
+        file_path = "./Data/Rate/"
+        listfile = os.listdir(file_path)
+        list_of_file = ""
+        for file in listfile:
+            list_of_file += file
+        self.sendData(sock, list_of_file)
+        return
 
     #update json and data
     def updateCurrencyRate(self, sock):
@@ -244,6 +261,10 @@ class Server:
                             self.CurrencyConvertor(conn)
                         elif (str == "SSC"):
                             self.showSpecificCurrency(conn)
+                        elif (str == "HIS"):
+                            self.SendJsonHistory(conn)
+                        elif (re.match('\d{2}-\d{2}-\d{4}') is not None):
+                            self.sendDateData(conn)
                         else:
                             self.clientQuit(conn)
                             return
