@@ -25,7 +25,7 @@ class QueueHandler(logging.Handler):
         self.log_queue.put(record)
 
 #Show console server
-class ConsoleUi:
+class ConsoleUI:
     """Poll messages from a logging queue and display them in a scrolled text widget"""
 
     def __init__(self, frame):
@@ -33,7 +33,7 @@ class ConsoleUi:
         # Create a ScrolledText wdiget
         self.scrolled_text = ScrolledText(frame, state='disabled', height=12)
         self.scrolled_text.grid(row=0, column=0, sticky=(N, S, W, E))
-        self.scrolled_text.configure(font='TkFixedFont')
+        self.scrolled_text.configure(font=('Consolas', 12))
         self.scrolled_text.tag_config('INFO', foreground='black')
         self.scrolled_text.tag_config('DEBUG', foreground='gray')
         self.scrolled_text.tag_config('WARNING', foreground='orange')
@@ -68,18 +68,19 @@ class ConsoleUi:
         self.frame.after(100, self.poll_log_queue)
 
 #Info
-class InfoUi:
+class InfoUI:
 
     def __init__(self, frame):
         self.frame = frame
+        space = 10 * " "
         ttk.Label(self.frame, text = "TỶ GIÁ TIỀN TỆ", font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
         ttk.Label(self.frame, text = "Server", font = ('Times', 20)).pack (side = TOP, pady = 10)
-        ttk.Label(self.frame, text = "Thông tin hiển thị:", font = ('Times', 13)).pack(side = TOP, pady = 2)
-        ttk.Label(self.frame, text = "Thông tin từ server - Màu đen", font = ('Times', 13,'italic')).pack(side = TOP, pady = 2)
-        ttk.Label(self.frame, text = "Yêu cầu từ client - Màu xám", font = ('Times', 13,'italic')).pack(side = TOP, pady = 2)
-        ttk.Label(self.frame, text = "Data từ client - Màu xanh" , font = ('Times', 13,'italic')).pack(side = TOP, pady = 2)
-        ttk.Label(self.frame, text = "Cảnh báo - Màu cam", font = ('Times', 13,'italic')).pack(side = TOP, pady = 2)
-        ttk.Label(self.frame, text = "Lỗi - Màu đỏ", font = ('Times', 13,'italic')).pack(side = TOP, pady = 2)
+        ttk.Label(self.frame, text = "Thông tin hiển thị:", font = ('Consolas', 14)).pack(side = TOP, pady = 2)
+        ttk.Label(self.frame, text = space + "|--> Thông tin từ server |   Màu đen" + space, font = ('Consolas', 14)).pack(side = TOP, pady = 2, anchor = 'e')
+        ttk.Label(self.frame, text = space + "|-->    Request từ client|   Màu xám" + space, foreground = 'gray', font = ('Consolas', 14)).pack(side = TOP, pady = 2, anchor = 'e')
+        ttk.Label(self.frame, text = space + "|-->   Dữ liệu từ client |  Màu xanh" + space, foreground = 'green' , font = ('Consolas', 14)).pack(side = TOP, pady = 2, anchor = 'e')
+        ttk.Label(self.frame, text = space + "|-->             Cảnh báo|   Màu cam" + space, foreground = 'orange', font = ('Consolas', 14)).pack(side = TOP, pady = 2, anchor = 'e')
+        ttk.Label(self.frame, text = space + "|-->                Lỗi  |    Màu đỏ" + space, foreground = 'red', font = ('Consolas', 14)).pack(side = TOP, pady = 2, anchor = 'e')
 
 #Show main server
 class App:
@@ -89,7 +90,7 @@ class App:
         global NClient
         self.root = root
         root.title('Server Console')
-        root.geometry("1200x600")
+        root.geometry("1400x600")
         root.resizable(0,0)
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0, weight=1)
@@ -108,8 +109,8 @@ class App:
         horizontal_pane.add(console_frame, weight=1)
         
         # Initialize all frames
-        self.form = InfoUi(form_frame)
-        self.console = ConsoleUi(console_frame)
+        self.form = InfoUI(form_frame)
+        self.console = ConsoleUI(console_frame)
         self.server = Server(logger,NClient)
         self.root.protocol('WM_DELETE_WINDOW', self.quit)
         self.root.bind('<Control-q>', self.quit)

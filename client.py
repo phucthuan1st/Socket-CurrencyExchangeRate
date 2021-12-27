@@ -9,6 +9,7 @@ import json
 from datetime import date
 
 BUFF_SIZE = 1024
+PORT = 65432
 
 #Create socket
 try:
@@ -145,7 +146,7 @@ class userGUI(object):
         self.middleFrame.pack(side = TOP, pady = 2, padx = 5)
         Label(self.middleFrame, text = "Loại ngoại tệ", font = ('Time', 11, 'bold')).pack(side = LEFT, padx = 2)
         self.CurVar = StringVar()
-        self.CurVar.set("USD")
+        self.CurVar.set("All")
         Entry(self.middleFrame,textvariable= self.CurVar, width = 50).pack(side = LEFT, padx = 2)
         Button(self.middleFrame, text = "Xem tỷ giá", command = self.showSpecificCurrency).pack(side = LEFT)
         
@@ -154,9 +155,6 @@ class userGUI(object):
         self.bottomFrame.pack(side = TOP, fill = X)
         self.treev = ttk.Treeview(self.bottomFrame, selectmode ='browse', height = 20)
         self.treev.pack(side =TOP)
-        verscrlbar = ttk.Scrollbar(self.bottomFrame, orient ="vertical", command = self.treev.yview)
-        verscrlbar.pack(side ='right', fill ='x')
-        self.treev.configure(xscrollcommand = verscrlbar.set)
         self.treev["columns"] = ("1", "2", "3", "4")
         self.treev['show'] = 'headings'
         self.treev.column("1", width = 125, anchor ='c')
@@ -224,7 +222,10 @@ class userGUI(object):
         if date == "Select a date to display":
             messagebox.showerror("Error", "Vui lòng chọn một ngày để hiển thị")
         else:
-            flag = sendData(self.sclient, "SAC-" + date)
+            if cur_name == "All": 
+                self.ShowAllCurrencies()
+                return
+            flag = sendData(self.sclient, "SSC-" + date)
             if not flag:
                 messagebox.showerror("Error", "Server đã ngừng kết nối")
                 return
@@ -232,12 +233,11 @@ class userGUI(object):
             if (data == -100):
                 messagebox.showerror("Error", "Server đã ngừng kết nối")
                 return
-            if cur_name == "All": 
-                self.ShowAllCurrencies()
             data = json.loads(data)
             for currency in data["results"]:
                 if currency['currency'] == cur_name:
                     self.treev.insert("", 'end', iid = 0, text ="", values = (currency['currency'], currency['buy_cash'], currency['buy_transfer'], currency['sell'] ))
+            sendData(self.sclient, cur_name)
         return       
     
     #Convert from one curency --> another
@@ -245,20 +245,20 @@ class userGUI(object):
         self.clearTreeView()
         self.master1 = Toplevel(self.master)
         self.master1.title("Chuyển đổi tiền tệ")
-        self.master1.geometry("500x500")
+        self.master1.geometry("550x550")
         self.master1.resizable(0, 0)
-        Label(self.master1, text = "CHUYỂN ĐỔI TIỀN TỆ", fg = 'blue',font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
-        Label(self.master1, text = "Chuyển đổi giữa các loại tiền tệ", fg = 'brown',font = ('Times', 15)).pack(side = TOP, pady = 5)
+        Label(self.master1, text = "CHUYỂN ĐỔI TIỀN TỆ", fg = 'blue', font = ('Times', 30, 'bold')).pack(side = TOP, pady = 5)
+        Label(self.master1, text = "Chuyển đổi giữa các loại tiền tệ", fg = 'brown',font = ('Times', 15)).pack(side = TOP)
         
         #draw and print result to screen
         self.bottomFrame = Frame(self.master1)
         self.bottomFrame.pack(side = TOP, fill = X )
         self.bottomFrame.place(y = 155)
-        self.treev1 = ttk.Treeview(self.bottomFrame, selectmode ='browse')
-        self.treev1.pack(side =TOP)
+        self.treev1 = ttk.Treeview(self.bottomFrame, selectmode ='browse', height = 15)
+        self.treev1.pack(side = TOP, padx = 25, pady = 5)
         verscrlbar = ttk.Scrollbar(self.bottomFrame, orient ="vertical", command = self.treev1.yview)
-        verscrlbar.pack(side ='right', fill ='x')
-        self.treev1.configure(xscrollcommand = verscrlbar.set)
+        verscrlbar.place(x = 520, y = 10, height = 320)
+        self.treev1.configure(yscrollcommand = verscrlbar.set)
         self.treev1["columns"] = ("1", "2", "3", "4")
         self.treev1['show'] = 'headings'
         self.treev1.column("1", width = 120, anchor ='c')
@@ -347,7 +347,7 @@ class userGUI(object):
         closing()
         
 #Log In
-class logInGUI(object):
+class loginGUI(object):
 
     #Log In GUI
     def __init__(self, master):
@@ -362,32 +362,32 @@ class logInGUI(object):
         self.bg = ImageTk.PhotoImage(img1)
         self.bgImage = Label(self.master,image=self.bg).place(x=0,y=0,relwidth=1,relheight=1)
         #draw login lable
-        self.loginLabel = Label(self.master, text = "LOGIN", fg = 'blue',font = ('Times', 30, 'bold'))
-        self.loginLabel.place(x = 170, y = 180)
+        self.loginLabel = Label(self.master, text = "ĐĂNG NHẬP",bg = 'white', fg = 'blue',font = ('Times', 30, 'bold'))
+        self.loginLabel.place(x = 105, y = 180)
         
         #draw username box
-        self.userLabel = Label(self.master, text = " User Name:",font = ('Times', 12, 'bold'))
-        self.userLabel.place(x = 70, y = 250)
+        self.userLabel = Label(self.master, text = " Tên tài khoản:", bg = 'white', font = ('Times', 12, 'bold'))
+        self.userLabel.place(x = 60, y = 250)
         self.userVar = StringVar()
         self.userEntry = Entry(self.master,textvariable= self.userVar,font = ('Times', 12, 'bold'), width = 25, bg = "white")
-        self.userEntry.place(x = 160, y = 250)
+        self.userEntry.place(x = 170, y = 250)
         
         #draw password box
         self.passVar = StringVar()
-        self.passLabel = Label(self.master, text = "    Password:", font = ('Times', 12, 'bold'))
-        self.passLabel.place(x = 70, y = 280)
+        self.passLabel = Label(self.master, text = "       Mật khẩu:", bg = 'white', font = ('Times', 12, 'bold'))
+        self.passLabel.place(x = 60, y = 280)
         self.passEntry = Entry(self.master,textvariable= self.passVar, show = "*", font = ('Times', 12, 'bold'), width = 25, bg = 'white')
-        self.passEntry.place(x = 160, y = 280)
+        self.passEntry.place(x = 170, y = 280)
        
         #draw login button
-        self.logInButton = Button(self.master, text = "LOGIN", width = 10, height = 1, font = ('Times', 12, 'bold'), command = self.logIn)
-        self.logInButton.place( x = 200, y = 320)
+        self.logInButton = Button(self.master, text = "ĐĂNG NHẬP", width = 12, height = 1, font = ('Times', 12, 'bold'), command = self.login)
+        self.logInButton.place( x = 185, y = 320)
        
         #draw regist button
-        self.regist1Label = Label(self.master, text = "Nếu bạn chưa có tài khoản", font = ('Times', 12, 'italic'))
+        self.regist1Label = Label(self.master, text = "Nếu bạn chưa có tài khoản", bg = 'white', font = ('Times', 12, 'italic'))
         self.regist1Label.place(x = 150, y = 390)
-        self.regist1Button = Button(self.master, text = "REGIST", width = 10, height = 1, font = ('Times', 12, 'bold'), command = self.registGUI)
-        self.regist1Button.place(x = 200, y = 420)
+        self.regist1Button = Button(self.master, text = "ĐĂNG KÍ", width = 12, height = 1, font = ('Times', 12, 'bold'), command = self.registrationGUI)
+        self.regist1Button.place(x = 185, y = 420)
       
         #update master
         self.master.protocol("WM_DELETE_WINDOW", self.closeClient)
@@ -399,7 +399,7 @@ class logInGUI(object):
         self.master.destroy()
 
     #Log In result submit
-    def logIn(self):
+    def login(self):
         flag = sendData(self.sclient, "LOGIN")
         if not flag:
             messagebox.showerror("Error", "Server đã ngừng kết nối")
@@ -429,7 +429,7 @@ class logInGUI(object):
            return False
 
     #Regist GUI
-    def registGUI(self):
+    def registrationGUI(self):
         self.loginLabel.place(x = 170, y = 180)
         self.logInButton.place( x = 200, y = 320)
         self.regist1Label.place(x = 150, y = 390)
@@ -438,27 +438,27 @@ class logInGUI(object):
         self.logInButton.place_forget()
         self.regist1Label.place_forget()
         self.regist1Button.place_forget()
-        self.registLabel = Label(self.master, text = "REGIST",bg = 'white', fg = 'blue',font = ('Times', 30, 'bold'))
-        self.registLabel.place(x = 170, y = 180)
+        self.registLabel = Label(self.master, text = "ĐĂNG KÝ TÀI KHOẢN", bg = 'white', fg = 'blue',font = ('Times', 22, 'bold'))
+        self.registLabel.place(x = 75, y = 180)
         self.passVar2 = StringVar()
-        self.passLabel2 = Label(self.master, text = "Confirm Pass: ",bg = 'white', font = ('Times', 12, 'bold'))
+        self.passLabel2 = Label(self.master, text = "Xác nhận MK:", bg = 'white', font = ('Times', 12, 'bold'))
         self.passLabel2.place (x = 60, y = 310)
-        self.passEntry2 = Entry(self.master,textvariable= self.passVar2,show = "*",font = ('Times', 12, 'bold'), width = 30, bg = "white")
-        self.passEntry2.place (x = 160, y = 310)
-        self.regist1Button = Button(self.master, text = "REGIST", width = 10, height = 1,font = ('Times', 12, 'bold'), command = self.registInClient)
+        self.passEntry2 = Entry(self.master,textvariable= self.passVar2,show = "*",font = ('Times', 12, 'bold'), width = 25, bg = "white")
+        self.passEntry2.place (x = 170, y = 310)
+        self.regist1Button = Button(self.master, text = "ĐĂNG KÝ", width = 12, height = 1,font = ('Times', 12, 'bold'), command = self.ClientRegist)
         self.regist1Button.place(x = 200, y = 350)
 
     #Regist Client Confirm Func
-    def registInClient(self):
+    def ClientRegist(self):
         if (self.passVar.get() != self.passVar2.get()):
             messagebox.showwarning("Warning","Nhập mật khẩu lại không đúng")
             return False
         else:
-            self.registInServer()
+            self.ServerRegist()
             return True
 
     #Regist to Server Func
-    def registInServer(self):
+    def ServerRegist(self):
         flag = sendData(self.sclient, "REGIST")
         if not flag:
             messagebox.showerror("Error", "Server đã ngừng kết nối")
@@ -474,28 +474,24 @@ class logInGUI(object):
             return
         elif (signal == '1'):
            messagebox.showinfo("Info", "Đăng kí thành công")
-           self.comeback()
+           self.ReturnLoginScreen()
            return True
         else:
            messagebox.showwarning("Warning","Tên đăng nhập tồn tại")
            return False
 
     #Comeback log in GUI
-    def comeback(self):
+    def ReturnLoginScreen(self):
         self.userVar.set("")
         self.passVar.set("")
-        self.registLabel.place(x = 170, y = 180)
-        self.passLabel2.place (x = 60, y = 310)
-        self.passEntry2.place (x = 160, y = 310)
-        self.regist1Button.place(x = 200, y = 350)
         self.registLabel.place_forget()
         self.passLabel2.place_forget()
         self.passEntry2.place_forget()
         self.regist1Button.place_forget()
-        self.loginLabel.place(x = 170, y = 180)
-        self.logInButton.place( x = 200, y = 320)
+        self.loginLabel.place(x = 105, y = 180)
+        self.logInButton.place( x = 185, y = 320)
         self.regist1Label.place(x = 150, y = 390)
-        self.regist1Button.place(x = 200, y = 420)
+        self.regist1Button.place(x = 185, y = 420)
 
 #Client GUI main
 class clientGUI(object):
@@ -507,28 +503,35 @@ class clientGUI(object):
         self.master.resizable(0, 0)
         Label(self.master, text = "TỶ GIÁ TIỀN TỆ", fg = 'blue',font = ('Times', 30, 'bold')).pack(side = TOP, pady = 5)
         Label(self.master, text = "Client", fg = 'blue',font = ('Times', 20)).pack(side = TOP, pady = 2)
-        Label(self.master, text = "Nhập ip", fg = 'black',font = ('Times', 10)).pack(side = TOP, pady = 2)
-        hostVar = StringVar()
-        hostVar.set("")
-        hostEntry = Entry(self.master,textvariable=hostVar, width = 30).pack(side = TOP, pady = 2)
-        submittedHost = hostVar.get()
-        connectFunc = partial(self.connectServer,hostVar)
-        Button(self.master, text = "Connect to Server", command = connectFunc).pack(side = TOP, pady = 2)
+        Label(self.master, text = "Nhập IP", fg = 'black',font = ('Times', 10)).pack(side = TOP, pady = 2)
+        self.hostVar = StringVar()
+        self.hostVar.set("")
+        self.hostEntry = Entry(self.master,textvariable = self.hostVar, width = 30).pack(side = TOP, pady = 2)
+        self.submittedHost = self.hostVar.get()
+        connectFunc = partial(self.connectServer, self.hostVar)
+        Button(self.master, text = "Kết nối đến Server", command = connectFunc).pack(side = TOP, pady = 2)
+        self.connect_message = ""
         self.master.mainloop()
 
     #Connect to Server
     def connectServer(self, IPVar):
         submittedIP = IPVar.get()
-        global check
         global sclient
         try:
-            ADDR = (submittedIP, 65432)
+            ADDR = (submittedIP, PORT)
             sclient.connect(ADDR)
-        except Exception:
-            messagebox.showerror("Error", "Chưa kết nối đến server")
+            self.connect_message = receive(sclient)
+            if self.connect_message == "Accept":
+                messagebox.showinfo("Info", "Kết nối đến server thành công")
+                loginGUI(self.master)
+            elif self.connect_message == "Denied":
+                raise Exception
+        except Exception as E:
+            if self.connect_message == "Denied":
+                messagebox.showerror("Error", "Server đã đạt đến giới hạn truy cập")
+            else:
+                messagebox.showerror("Error", "Kết nối đến server thất bại")
             return False
-        messagebox.showinfo("Info", "Kết nối đến server thành công")
-        logInGUI(self.master)
         return True
 
 #Main

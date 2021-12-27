@@ -19,6 +19,26 @@
         {
             "usr": "tester",
             "psw": "test"
+        },
+        {
+            "usr": "phucthuan",
+            "psw": "123"
+        },
+        {
+            "usr": "kinh_thanh",
+            "psw": "thanh"
+        },
+        {
+            "usr": "bin",
+            "psw": "bin"
+        },
+        {
+            "usr": "ben",
+            "psw": "ben"
+        },
+        {
+            "usr": "bo",
+            "psw": "bo"
         }
     ]
 }

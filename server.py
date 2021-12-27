@@ -48,13 +48,19 @@ class Server:
         while self.isOpen:
             try:
                 client, addr = self.s.accept()
-                self.sock_clients.append(client)
-                start_new_thread(self.threadClient, (client, ))
-                self.threadCount += 1
-                self.port_num_clients[addr[1]] = self.threadCount
-                self.logger.log(logging.CRITICAL,"Client number: " + str(self.threadCount) + " connected. Address: " + str(addr))
+                if (self.NClient == len(self.sock_clients)):
+                    self.sendData(client, "Denied")
+                else:
+                    self.sendData(client, "Accept")
+                    self.sock_clients.append(client)
+                    start_new_thread(self.ClientControl, (client, ))
+                    self.threadCount += 1
+                    self.port_num_clients[addr[1]] = self.threadCount
+                    self.logger.log(logging.CRITICAL,"Client thứ: " + str(self.threadCount) + " đã kết nối. IP: " + str(addr))
+                    if self.NClient == len(self.sock_clients):
+                        self.logger.log(logging.WARNING,"Đã đạt đến giới hạn truy cập")       
             except socket.error:
-                print("cannot create socket")
+                self.logger.log(logging.ERROR,"Không thể tạo socket mới")
                 break
 
     #Open server
@@ -112,7 +118,7 @@ class Server:
     #update json data from vcb API
     def updateJsonData(self):
         url = "https://vapi.vnappmob.com/api/request_api_key?scope=exchange_rate"
-        API_data = requests.get(url).json();
+        API_data = requests.get(url).json()
         API_key = API_data["results"]
 
         request = "https://vapi.vnappmob.com/api/v2/exchange_rate/bid?api_key=" + str(API_key)
@@ -132,10 +138,10 @@ class Server:
         sub = self.receiveData(sock)
         sub = json.loads(sub)
         client_number = self.port_num_clients[sock.getpeername()[1]]
-        self.logger.log(logging.CRITICAL,"Client " + str(client_number) + ". Usr:" + str(sub['usr']) + " - Pass:" + str(sub['psw']))   
+        self.logger.log(logging.CRITICAL,"Client [" + str(client_number) + "]. Usr:" + str(sub['usr']) + " - Pass:" + str(sub['psw']))   
         if (sub['usr'] == ADMIN_USR and sub['psw'] == ADMIN_PSW):
             self.sendData(sock, '2') # Admin đăng nhập thành công
-            self.logger.log(logging.INFO,"Client " + str(client_number) + ": Đăng nhập admin thành công")
+            self.logger.log(logging.INFO,"Client [" + str(client_number) + "]: Đăng nhập admin thành công")
             return 2    
         fd = open("./Data/account.json", "r")
         accs = json.loads(fd.read())
@@ -146,14 +152,14 @@ class Server:
             if u == sub['usr']:
                 if p == sub['psw']:
                     self.sendData(sock, '1') # Đăng nhập thành công
-                    self.logger.log(logging.INFO,"Client " + str(client_number) + ": Đăng nhập thành công")
+                    self.logger.log(logging.INFO,"Client [" + str(client_number) + "]: Đăng nhập thành công")
                     return 1
                 else:
                     self.sendData(sock, '-1') # Sai mật khẩu
-                    self.logger.log(logging.ERROR,"Client " + str(client_number) + ": Sai mật khẩu")
+                    self.logger.log(logging.ERROR,"Client [" + str(client_number) + "]: Sai mật khẩu")
                     return -1
         self.sendData(sock, '0') # Tài khoản không tồn tại
-        self.logger.log(logging.ERROR,"Client " + str(client_number) + ": Tài khoản không tồn tại")
+        self.logger.log(logging.ERROR,"Client [" + str(client_number) + "]: Tài khoản không tồn tại")
         return 0
 
     # Đăng ký
@@ -169,7 +175,7 @@ class Server:
             u = acc["usr"]
             if u == sub['usr']:
                 self.sendData(sock, '0') # Tên đăng nhập đã tồn tại
-                self.logger.log(logging.ERROR,"Client " + str(client_number) + ": Tên đăng nhập đã tồn tại")
+                self.logger.log(logging.ERROR,"Client [" + str(client_number) + "]: Tên đăng nhập đã tồn tại")
                 userExist = True
                 return False
         if not userExist:
@@ -178,7 +184,7 @@ class Server:
             fd.seek(0)
             json.dump(accs, fd, indent = 4)
             self.sendData(sock, '1') # Đăng ký thành công
-            self.logger.log(logging.CRITICAL,"Client " + str(client_number) + ": Đăng ký thành công")
+            self.logger.log(logging.CRITICAL,"Client [" + str(client_number) + "]: Đăng ký thành công")
         fd.close()
         return True
 
@@ -200,7 +206,7 @@ class Server:
         data = json.load(f)
         f.close()
         self.sendData(sock, json.dumps(data))
-        self.logger.log(logging.DEBUG, "Client " + str(client_number) + " vừa yêu cầu xem tỷ giá của ngày " + self.date)
+        self.logger.log(logging.INFO, "Client [" + str(client_number) + "] vừa yêu cầu xem tỷ giá của ngày " + self.date)
         return
 
     #update json and data
@@ -215,7 +221,7 @@ class Server:
     def CurrencyConvertor(self,sock):
         client_number = self.port_num_clients[sock.getpeername()[1]]
         self.sendRateData(sock)
-        self.logger.log(logging.DEBUG, "Client " + str(client_number) + " vừa dùng công cụ chuyển đổi ngoại tệ")
+        self.logger.log(logging.INFO, "Client [" + str(client_number) + "] vừa dùng công cụ chuyển đổi ngoại tệ")
         return False
 
     #show all currency rate
@@ -226,19 +232,25 @@ class Server:
     #show a specific currency rate to VND   
     def showSpecificCurrency(self, sock):
         self.sendRateData(sock)
+        cur_name = self.receiveData(sock)
+        client_number = self.port_num_clients[sock.getpeername()[1]]
+        self.logger.log(logging.INFO, "Tỉ giá của đồng " + cur_name + " đã được gửi đến client [" + str(client_number) + "]")
         return False
 
     #Client Quit
     def clientQuit(self, sock):
         try:
             client_number = self.port_num_clients[sock.getpeername()[1]]
-            self.logger.log(logging.ERROR,"Client " + str(client_number) + " đã ngừng kết nối")
+            self.logger.log(logging.ERROR,"Client [" + str(client_number) + "] đã ngừng kết nối")
+            self.port_num_clients.pop(sock.getpeername()[1])
             sock.close()
+            self.sock_clients.remove(sock)
+            self.logger.log(logging.INFO, "Còn " + str(len(self.sock_clients)) + " client đang truy cập")
         except:
             return
 
     #Client action with thread
-    def threadClient(self, conn):
+    def ClientControl(self, conn):
         message = ""
         while True:
             message = self.receiveData(conn)
@@ -259,7 +271,8 @@ class Server:
                             return
                 elif (signal == 1): #user access
                     while True:
-                        self.logger.log(logging.DEBUG,message)
+                        if (message != "HIS"):
+                            self.logger.log(logging.DEBUG,"Message: " + message)
                         message = self.receiveData(conn)
                         if (message == "HIS"):
                             self.SendJsonHistory(conn)
