@@ -6,6 +6,7 @@ from functools import partial
 from socket import AF_INET, socket, SOCK_STREAM
 import socket
 import json
+from datetime import date
 
 BUFF_SIZE = 1024
 
@@ -137,8 +138,8 @@ class userGUI(object):
         Label(self.master, text = "TỶ GIÁ TIỀN TỆ", fg = 'brown',font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
         self.topFrame = Frame(self.master)
         self.topFrame.pack(side = TOP, pady = 2, padx = 5)
-        Button(self.topFrame, text = "Chuyển đổi giữa các ngoại tệ", command = self.CurrencyConvertor).pack(side = LEFT, padx = 10)
-        Button(self.topFrame, text = "Hiển thị tất cả tỉ giá ngoại tệ (so với VND)", command = self.ShowAllCurrencies).pack(side = LEFT, pady = 5)
+        Button(self.topFrame, text = "Chuyển đổi giữa các loại tiền tệ", command = self.CurrencyConvertor).pack(side = LEFT, padx = 5)
+        Button(self.topFrame, text = "Hiển thị tất cả tỉ giá hối đoái", command = self.ShowAllCurrencies).pack(side = LEFT, padx = 5)
         self.ListFile()
         self.middleFrame = Frame(self.master)
         self.middleFrame.pack(side = TOP, pady = 2, padx = 5)
@@ -182,8 +183,8 @@ class userGUI(object):
         self.options = files.split('.json')
         self.options.pop()
         self.showDate = StringVar()
-        self.showDate.set(self.options[-1])
-        OptionMenu(self.topFrame, self.showDate, *self.options).pack(side = LEFT, pady = 5)
+        self.showDate.set("Select a date to display")
+        OptionMenu(self.topFrame, self.showDate, *self.options).pack(side = LEFT, padx = 5, pady = 5)
         return
     
     #Delete showed list match 
@@ -196,40 +197,48 @@ class userGUI(object):
     def ShowAllCurrencies(self):
         self.clearTreeView()
         self.CurVar.set("All")
-        flag = sendData(self.sclient, "SAC")
-        if not flag:
-            messagebox.showerror("Error", "Server đã ngừng kết nối")
-            return
-        data = receive(sclient)
-        if (data == -100):
-            messagebox.showerror("Error", "Server đã ngừng kết nối")
-            return
-        data = json.loads(data)
-        cnt = 0
-        for currency in data["results"]:
-            self.treev.insert("", 'end', iid = cnt, text ="", values = (currency['currency'], currency['buy_cash'], currency['buy_transfer'], currency['sell'] ))
-            cnt += 1
+        date = self.showDate.get()
+        if date == "Select a date to display":
+            messagebox.showerror("Error", "Vui lòng chọn một ngày để hiển thị")
+        else:
+            flag = sendData(self.sclient, "SAC-" + date)
+            if not flag:
+                messagebox.showerror("Error", "Server đã ngừng kết nối")
+                return
+            data = receive(sclient)
+            if (data == -100):
+                messagebox.showerror("Error", "Server đã ngừng kết nối")
+                return
+            data = json.loads(data)
+            cnt = 0
+            for currency in data["results"]:
+                self.treev.insert("", 'end', iid = cnt, text ="", values = (currency['currency'], currency['buy_cash'], currency['buy_transfer'], currency['sell'] ))
+                cnt += 1
         return
 
     #show specific currency
     def showSpecificCurrency(self):
         cur_name = self.CurVar.get()
         self.clearTreeView()
-        flag = sendData(self.sclient, "SSC")
-        if not flag:
-            messagebox.showerror("Error", "Server đã ngừng kết nối")
-            return
-        data = receive(sclient)
-        if (data == -100):
-            messagebox.showerror("Error", "Server đã ngừng kết nối")
-            return
-        if cur_name == "All": 
-            self.ShowAllCurrencies()
-        data = json.loads(data)
-        for currency in data["results"]:
-            if currency['currency'] == cur_name:
-                self.treev.insert("", 'end', iid = 0, text ="", values = (currency['currency'], currency['buy_cash'], currency['buy_transfer'], currency['sell'] ))
-                return       
+        date = self.showDate.get()
+        if date == "Select a date to display":
+            messagebox.showerror("Error", "Vui lòng chọn một ngày để hiển thị")
+        else:
+            flag = sendData(self.sclient, "SAC-" + date)
+            if not flag:
+                messagebox.showerror("Error", "Server đã ngừng kết nối")
+                return
+            data = receive(sclient)
+            if (data == -100):
+                messagebox.showerror("Error", "Server đã ngừng kết nối")
+                return
+            if cur_name == "All": 
+                self.ShowAllCurrencies()
+            data = json.loads(data)
+            for currency in data["results"]:
+                if currency['currency'] == cur_name:
+                    self.treev.insert("", 'end', iid = 0, text ="", values = (currency['currency'], currency['buy_cash'], currency['buy_transfer'], currency['sell'] ))
+        return       
     
     #Convert from one curency --> another
     def CurrencyConvertor(self):
@@ -291,8 +300,7 @@ class userGUI(object):
 
     #print the exchange réult to treeview
     def showExchangeResult(self):
-
-        flag = sendData(self.sclient, "CRC")
+        flag = sendData(self.sclient, "CRC-" + str(date.today()))
         if not flag:
             messagebox.showerror("Error", "Server đã ngừng kết nối")
             return

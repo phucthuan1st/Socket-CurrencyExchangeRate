@@ -109,7 +109,7 @@ class Server:
             schedule.run_pending()
             time.sleep(1)
     
-    #update json data
+    #update json data from vcb API
     def updateJsonData(self):
         url = "https://vapi.vnappmob.com/api/request_api_key?scope=exchange_rate"
         API_data = requests.get(url).json();
@@ -117,8 +117,13 @@ class Server:
 
         request = "https://vapi.vnappmob.com/api/v2/exchange_rate/bid?api_key=" + str(API_key)
         recieve = requests.get(request).json()
+        for cur in recieve['results']:
+            if cur['buy_transfer'] == 0.0:
+                cur['buy_transfer'] = round(cur['sell'] * 99.0 / 100.0, 2)
+            if cur['buy_cash'] == 0.0:
+                cur['buy_cash'] = round(cur['buy_transfer'] * 99.0 / 100.0, 2)
         file_name = str(date.today()) + '.json'
-        with open('./Data/Rate/' + file_name, 'w', encoding='utf-8') as _file_:
+        with open('./Data/Rate/' + file_name, 'w+', encoding='utf-8') as _file_:
             json.dump(recieve, _file_, ensure_ascii=False, indent=4)
         self.logger.log(logging.INFO,"Dữ liệu đã được cập nhật")
     
@@ -177,16 +182,6 @@ class Server:
         fd.close()
         return True
 
-    #load currency data from json and send back, log to server
-    def DataSendBack(self, sock, message):
-        client_number = self.port_num_clients[sock.getpeername()[1]]
-        file_name = str(date.today()) + '.json'
-        f = open("./Data/Rate/" + file_name, "r")
-        data = json.load(f)
-        f.close()
-        self.sendData(sock, json.dumps(data))
-        self.logger.log(logging.DEBUG,"Client " + str(client_number) + message)
-
     #send json history in data directory
     def SendJsonHistory(self, sock):
         file_path = "./Data/Rate/"
@@ -195,6 +190,17 @@ class Server:
         for file in listfile:
             list_of_file += file
         self.sendData(sock, list_of_file)
+        return
+
+    #read json file and get rate data
+    def sendRateData(self, sock):
+        client_number = self.port_num_clients[sock.getpeername()[1]]
+        file_name = str(self.date) + '.json'
+        f = open("./Data/Rate/" + file_name, 'r')
+        data = json.load(f)
+        f.close()
+        self.sendData(sock, json.dumps(data))
+        self.logger.log(logging.DEBUG, "Client " + str(client_number) + " vừa yêu cầu xem tỷ giá của ngày " + self.date)
         return
 
     #update json and data
@@ -207,20 +213,19 @@ class Server:
 
     #convert amount of money to another one
     def CurrencyConvertor(self,sock):
-        message = ": vừa dùng công cụ chuyển đổi ngoại tệ"
-        self.DataSendBack(sock, message)
+        client_number = self.port_num_clients[sock.getpeername()[1]]
+        self.sendRateData(sock)
+        self.logger.log(logging.DEBUG, "Client " + str(client_number) + " vừa dùng công cụ chuyển đổi ngoại tệ")
         return False
 
     #show all currency rate
     def ShowAllCurrencies(self,sock):
-        message = ": vừa xem danh sách tổng hợp tỷ giá hối đoái"
-        self.DataSendBack(sock, message)
+        self.sendRateData(sock)
         return False
 
     #show a specific currency rate to VND   
     def showSpecificCurrency(self, sock):
-        message = ": vừa xem một tỷ giá hối đoái"
-        self.DataSendBack(sock, message)
+        self.sendRateData(sock)
         return False
 
     #Client Quit
@@ -237,7 +242,7 @@ class Server:
         str = ""
         while True:
             str = self.receiveData(conn)
-            self.logger.log(logging.DEBUG,str)
+            self.logger.log(logging.DEBUG, "Message: " + str)
             if (str == "LOGIN"):
                 signal = self.login(conn)
                 if (signal == 2): #admin access
@@ -255,16 +260,17 @@ class Server:
                     while True:
                         self.logger.log(logging.DEBUG,str)
                         str = self.receiveData(conn)
-                        if (str == "SAC"):
-                            self.ShowAllCurrencies(conn)
-                        elif (str == "CRC"):
-                            self.CurrencyConvertor(conn)
-                        elif (str == "SSC"):
-                            self.showSpecificCurrency(conn)
-                        elif (str == "HIS"):
+                        if (str == "HIS"):
                             self.SendJsonHistory(conn)
-                        elif (re.match('\d{2}-\d{2}-\d{4}') is not None):
-                            self.sendDateData(conn)
+                        elif (re.match('\S\S\S-\d\d\d\d-\d\d-\d\d', str) is not None):
+                            self.execute = str[0:3]
+                            self.date = str[4:]
+                            if (self.execute == "SAC"):
+                                self.ShowAllCurrencies(conn)
+                            elif (self.execute == "CRC"):
+                                self.CurrencyConvertor(conn)
+                            elif (self.execute == "SSC"):
+                                self.showSpecificCurrency(conn)
                         else:
                             self.clientQuit(conn)
                             return
