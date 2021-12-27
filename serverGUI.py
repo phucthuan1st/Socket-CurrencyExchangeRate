@@ -125,8 +125,8 @@ def submitNumThread(root, nVar):
     global NClient
     NClient = int(nVar.get())
     if (NClient > 0):
-        root2 = Tk()
-        app = App(root2)
+        new_root = Tk()
+        app = App(new_root)
         root.destroy()
         app.root.mainloop()
     return
