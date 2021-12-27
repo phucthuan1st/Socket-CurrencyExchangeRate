@@ -239,32 +239,33 @@ class Server:
 
     #Client action with thread
     def threadClient(self, conn):
-        str = ""
+        message = ""
         while True:
-            str = self.receiveData(conn)
-            self.logger.log(logging.DEBUG, "Message: " + str)
-            if (str == "LOGIN"):
+            message = self.receiveData(conn)
+            self.logger.log(logging.DEBUG, "Message: " + message)
+            if (message == "LOGIN"):
                 signal = self.login(conn)
                 if (signal == 2): #admin access
                     while True:
-                        str = self.receiveData(conn)
-                        self.logger.log(logging.DEBUG,str)
-                        if (str == "UPDR"):
+                        message = self.receiveData(conn)
+                        self.logger.log(logging.DEBUG,message)
+                        if (message == "UPDR"):
                             self.updateCurrencyRate(conn)
-                        elif (str == "ShAll"):
+                        elif (message == "ShAll"):
+                            self.date = str(date.today())
                             self.ShowAllCurrencies(conn)
                         else:
                             self.clientQuit(conn)
                             return
                 elif (signal == 1): #user access
                     while True:
-                        self.logger.log(logging.DEBUG,str)
-                        str = self.receiveData(conn)
-                        if (str == "HIS"):
+                        self.logger.log(logging.DEBUG,message)
+                        message = self.receiveData(conn)
+                        if (message == "HIS"):
                             self.SendJsonHistory(conn)
-                        elif (re.match('\S\S\S-\d\d\d\d-\d\d-\d\d', str) is not None):
-                            self.execute = str[0:3]
-                            self.date = str[4:]
+                        elif (re.match('\S\S\S-\d\d\d\d-\d\d-\d\d', message) is not None):
+                            self.execute = message[0:3]
+                            self.date = message[4:]
                             if (self.execute == "SAC"):
                                 self.ShowAllCurrencies(conn)
                             elif (self.execute == "CRC"):
@@ -274,7 +275,7 @@ class Server:
                         else:
                             self.clientQuit(conn)
                             return
-            elif (str == "REGIST"):
+            elif (message == "REGIST"):
                 self.regist(conn)
             else:
                 self.clientQuit(conn)
