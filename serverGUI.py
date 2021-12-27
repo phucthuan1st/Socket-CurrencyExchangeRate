@@ -75,12 +75,12 @@ class InfoUI:
         space = 10 * " "
         ttk.Label(self.frame, text = "TỶ GIÁ TIỀN TỆ", font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
         ttk.Label(self.frame, text = "Server", font = ('Times', 20)).pack (side = TOP, pady = 10)
-        ttk.Label(self.frame, text = "Thông tin hiển thị:", font = ('Consolas', 14)).pack(side = TOP, pady = 2)
-        ttk.Label(self.frame, text = space + "|--> Thông tin từ server |   Màu đen" + space, font = ('Consolas', 14)).pack(side = TOP, pady = 2, anchor = 'e')
-        ttk.Label(self.frame, text = space + "|-->    Request từ client|   Màu xám" + space, foreground = 'gray', font = ('Consolas', 14)).pack(side = TOP, pady = 2, anchor = 'e')
-        ttk.Label(self.frame, text = space + "|-->   Dữ liệu từ client |  Màu xanh" + space, foreground = 'green' , font = ('Consolas', 14)).pack(side = TOP, pady = 2, anchor = 'e')
-        ttk.Label(self.frame, text = space + "|-->             Cảnh báo|   Màu cam" + space, foreground = 'orange', font = ('Consolas', 14)).pack(side = TOP, pady = 2, anchor = 'e')
-        ttk.Label(self.frame, text = space + "|-->                Lỗi  |    Màu đỏ" + space, foreground = 'red', font = ('Consolas', 14)).pack(side = TOP, pady = 2, anchor = 'e')
+        ttk.Label(self.frame, text = "Thông tin hiển thị:", font = ('Consolas', 13)).pack(side = TOP, pady = 2)
+        ttk.Label(self.frame, text = space + "|--> Thông tin từ server |   Màu đen" + space, font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
+        ttk.Label(self.frame, text = space + "|-->    Request từ client|   Màu xám" + space, foreground = 'gray', font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
+        ttk.Label(self.frame, text = space + "|-->   Dữ liệu từ client |  Màu xanh" + space, foreground = 'green' , font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
+        ttk.Label(self.frame, text = space + "|-->             Cảnh báo|   Màu cam" + space, foreground = 'orange', font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
+        ttk.Label(self.frame, text = space + "|-->                Lỗi  |    Màu đỏ" + space, foreground = 'red', font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
 
 #Show main server
 class App:
@@ -100,7 +100,7 @@ class App:
         vertical_pane.grid(row=0, column=0, sticky="nsew")
         horizontal_pane = ttk.PanedWindow(vertical_pane, orient=HORIZONTAL)
         vertical_pane.add(horizontal_pane)
-        form_frame = ttk.Labelframe(horizontal_pane, text="MyServer")
+        form_frame = ttk.Labelframe(horizontal_pane, text="My Server")
         form_frame.columnconfigure(1, weight=1)
         horizontal_pane.add(form_frame, weight=1)
         console_frame = ttk.Labelframe(horizontal_pane, text="Console")
@@ -145,7 +145,7 @@ def main():
     nVar = StringVar()
     ttk.Entry(root,textvariable= nVar, width = 20).pack(side = TOP, pady = 5)
     nFunc = partial(submitNumThread,root, nVar)
-    ttk.Button(root, text = "Submit", command = nFunc).pack(side = TOP)
+    ttk.Button(root, text = "Mở Server", command = nFunc).pack(side = TOP)
     root.mainloop()
 
 

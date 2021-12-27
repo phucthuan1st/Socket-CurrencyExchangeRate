@@ -11,6 +11,14 @@ import threading
 from datetime import date
 import os
 import re
+import queue
+import logging
+import signal
+from tkinter import *
+from tkinter import ttk
+from tkinter.scrolledtext import ScrolledText
+from tkinter import ttk, VERTICAL, HORIZONTAL, N, S, E, W
+from functools import partial
 
 hostname = socket.gethostname()
 HOST = socket.gethostbyname(hostname) 
@@ -22,6 +30,126 @@ threadCount = 0
 
 ADMIN_USR = "admin"     
 ADMIN_PSW = "adm"
+
+logger = logging.getLogger(__name__)
+
+NClient = 5                  
+
+class QueueHandler(logging.Handler):
+    def __init__(self, log_queue):
+        super().__init__()
+        self.log_queue = log_queue
+
+    def emit(self, record):
+        self.log_queue.put(record)
+
+#Show console server
+class ConsoleUI:
+    """Poll messages from a logging queue and display them in a scrolled text widget"""
+
+    def __init__(self, frame):
+        self.frame = frame
+        # Create a ScrolledText wdiget
+        self.scrolled_text = ScrolledText(frame, state='disabled', height=12)
+        self.scrolled_text.grid(row=0, column=0, sticky=(N, S, W, E))
+        self.scrolled_text.configure(font=('Consolas', 12))
+        self.scrolled_text.tag_config('INFO', foreground='black')
+        self.scrolled_text.tag_config('DEBUG', foreground='gray')
+        self.scrolled_text.tag_config('WARNING', foreground='orange')
+        self.scrolled_text.tag_config('ERROR', foreground='red')
+        self.scrolled_text.tag_config('CRITICAL', foreground='green')
+        # Create a logging handler using a queue
+        self.log_queue = queue.Queue()
+        self.queue_handler = QueueHandler(self.log_queue)
+        formatter = logging.Formatter('%(asctime)s: %(message)s')
+        self.queue_handler.setFormatter(formatter)
+        logger.addHandler(self.queue_handler)
+        # Start polling messages from the queue
+        self.frame.after(100, self.poll_log_queue)
+
+    def display(self, record):
+        msg = self.queue_handler.format(record)
+        self.scrolled_text.configure(state='normal')
+        self.scrolled_text.insert(END, msg + '\n', record.levelname)
+        self.scrolled_text.configure(state='disabled')
+        # Autoscroll to the bottom
+        self.scrolled_text.yview(END)
+
+    def poll_log_queue(self):
+        # Check every 100ms if there is a new message in the queue to display
+        while True:
+            try:
+                record = self.log_queue.get(block=False)
+            except queue.Empty:
+                break
+            else:
+                self.display(record)
+        self.frame.after(100, self.poll_log_queue)
+
+#Info
+class InfoUI:
+
+    def __init__(self, frame):
+        self.frame = frame
+        space = 10 * " "
+        ttk.Label(self.frame, text = "TỶ GIÁ TIỀN TỆ", font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
+        ttk.Label(self.frame, text = "Server", font = ('Times', 20)).pack (side = TOP, pady = 10)
+        ttk.Label(self.frame, text = "Thông tin hiển thị:", font = ('Consolas', 13)).pack(side = TOP, pady = 2)
+        ttk.Label(self.frame, text = space + "|--> Thông tin từ server |   Màu đen" + space, font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
+        ttk.Label(self.frame, text = space + "|-->    Request từ client|   Màu xám" + space, foreground = 'gray', font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
+        ttk.Label(self.frame, text = space + "|-->   Dữ liệu từ client |  Màu xanh" + space, foreground = 'green' , font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
+        ttk.Label(self.frame, text = space + "|-->             Cảnh báo|   Màu cam" + space, foreground = 'orange', font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
+        ttk.Label(self.frame, text = space + "|-->                Lỗi  |    Màu đỏ" + space, foreground = 'red', font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
+
+#Show main server
+class App:
+
+    #innit console server
+    def __init__(self, root):
+        global NClient
+        self.root = root
+        root.title('Server Console')
+        root.geometry("1400x600")
+        root.resizable(0,0)
+        root.columnconfigure(0, weight=1)
+        root.rowconfigure(0, weight=1)
+        
+        # Create the panes and frames
+        vertical_pane = ttk.PanedWindow(self.root, orient=VERTICAL)
+        vertical_pane.grid(row=0, column=0, sticky="nsew")
+        horizontal_pane = ttk.PanedWindow(vertical_pane, orient=HORIZONTAL)
+        vertical_pane.add(horizontal_pane)
+        form_frame = ttk.Labelframe(horizontal_pane, text="My Server")
+        form_frame.columnconfigure(1, weight=1)
+        horizontal_pane.add(form_frame, weight=1)
+        console_frame = ttk.Labelframe(horizontal_pane, text="Console")
+        console_frame.columnconfigure(0, weight=1)
+        console_frame.rowconfigure(0, weight=1)
+        horizontal_pane.add(console_frame, weight=1)
+        
+        # Initialize all frames
+        self.form = InfoUI(form_frame)
+        self.console = ConsoleUI(console_frame)
+        self.server = Server(logger,NClient)
+        self.root.protocol('WM_DELETE_WINDOW', self.quit)
+        self.root.bind('<Control-q>', self.quit)
+        signal.signal(signal.SIGINT, self.quit)
+
+    #Close server
+    def quit(self, *args):
+        self.server.closeServer()
+        self.root.destroy()
+
+#Submit max num client can connect
+def submitNumThread(root, nVar):
+    global NClient
+    NClient = int(nVar.get())
+    if (NClient > 0):
+        new_root = Tk()
+        app = App(new_root)
+        root.destroy()
+        app.root.mainloop()
+    return
 
 #Server
 class Server:
@@ -36,6 +164,7 @@ class Server:
         self.threadCount = 0
         self.sock_clients = []
         self.port_num_clients = {}
+        self.activeUsers = []
         self.isOpen = False
         self.updateJsonData()
         self.schedule = schedule.every(15).minutes.do(self.updateJsonData)
@@ -139,13 +268,24 @@ class Server:
         sub = json.loads(sub)
         client_number = self.port_num_clients[sock.getpeername()[1]]
         self.logger.log(logging.CRITICAL,"Client [" + str(client_number) + "]. Usr:" + str(sub['usr']) + " - Pass:" + str(sub['psw']))   
+        
+        # Admin is log into the server
         if (sub['usr'] == ADMIN_USR and sub['psw'] == ADMIN_PSW):
-            self.sendData(sock, '2') # Admin đăng nhập thành công
+            self.sendData(sock, '2') 
             self.logger.log(logging.INFO,"Client [" + str(client_number) + "]: Đăng nhập admin thành công")
             return 2    
+        
+        
+        if (sub['usr'] in self.activeUsers):
+            self.sendData(sock, 'active')
+            self.logger.log(logging.ERROR, "Client [" + str(client_number) + "]: " + str(sub['usr']) + " hiện đang được sử dụng trong một client khác")
+            return 0
+        
+        #open account list
         fd = open("./Data/account.json", "r")
         accs = json.loads(fd.read())
         fd.close()
+        #check if correct password in account list
         for acc in accs["account"]:
             u = acc["usr"]
             p = acc["psw"]
@@ -153,13 +293,17 @@ class Server:
                 if p == sub['psw']:
                     self.sendData(sock, '1') # Đăng nhập thành công
                     self.logger.log(logging.INFO,"Client [" + str(client_number) + "]: Đăng nhập thành công")
+                    self.activeUsers.append(str(sub['usr']))
                     return 1
                 else:
                     self.sendData(sock, '-1') # Sai mật khẩu
                     self.logger.log(logging.ERROR,"Client [" + str(client_number) + "]: Sai mật khẩu")
                     return -1
-        self.sendData(sock, '0') # Tài khoản không tồn tại
+        
+        #send unexist account signal to client and log
+        self.sendData(sock, '0') 
         self.logger.log(logging.ERROR,"Client [" + str(client_number) + "]: Tài khoản không tồn tại")
+        
         return 0
 
     # Đăng ký
@@ -220,8 +364,49 @@ class Server:
     #convert amount of money to another one
     def CurrencyConvertor(self,sock):
         client_number = self.port_num_clients[sock.getpeername()[1]]
-        self.sendRateData(sock)
         self.logger.log(logging.INFO, "Client [" + str(client_number) + "] vừa dùng công cụ chuyển đổi ngoại tệ")
+        
+        #reciever data from client
+        data = self.receiveData(sock)
+        
+        data = data.split("|")
+        fromCur = data[0]
+        toCur = data[1]
+        fromValue = float(data[2])
+        
+        #open data file
+        f = open("./Data/Rate/" + str(date.today()) + ".json", "r")
+        data = json.load(f)
+        f.close()
+        
+        fromRate = -1
+        toRate = -1
+        
+        #if match in data file -> get value
+        for cur in data['results']:
+            if cur['currency'] == fromCur:
+                fromRate = cur['sell']
+            if cur['currency'] == toCur:
+                toRate = cur['sell']
+        
+        if fromCur == "VND":
+            fromRate = 1.0
+        if toCur == "VND":
+            toCur = 1.0
+        #if both of these are not in data
+        message = ""
+        if fromRate == -1:
+            message = message + fromCur + ' '
+        if toRate == -1:
+            message = message + toCur + ' '
+        
+        if message == "":
+            self.sendData(sock, 'done')
+            toValue = round(fromValue * fromRate / toRate, 2)
+            self.sendData(sock, str(toValue))      
+        else:
+            self.sendData(sock, message + "chưa có trong dữ liệu")
+        
         return False
 
     #show all currency rate
@@ -238,19 +423,41 @@ class Server:
         return False
 
     #Client Quit
-    def clientQuit(self, sock):
+    def clientLogout(self, sock):
         try:
             client_number = self.port_num_clients[sock.getpeername()[1]]
-            self.logger.log(logging.ERROR,"Client [" + str(client_number) + "] đã ngừng kết nối")
+            usr = self.receiveData(sock)
+            self.logger.log(logging.ERROR,"Client [" + str(client_number) + "]: " + usr + " đã ngừng kết nối")
+            
+            #remove client from server base
             self.port_num_clients.pop(sock.getpeername()[1])
             sock.close()
             self.sock_clients.remove(sock)
-            self.logger.log(logging.INFO, "Còn " + str(len(self.sock_clients)) + " client đang truy cập")
+            self.logger.log(logging.INFO, "Còn " + str(len(self.sock_clients)) + " client đang truy cập server")
+            
+            #log the number of client remaining on server
+            self.activeUsers.remove(str(usr))
+        except:
+            return
+
+    def clientQuit(self, sock):
+        try:
+            client_number = self.port_num_clients[sock.getpeername()[1]]
+            self.logger.log(logging.ERROR,"Client [" + str(client_number) + "]: đã ngừng kết nối")
+            
+            #remove client from server base
+            self.port_num_clients.pop(sock.getpeername()[1])
+            sock.close()
+            self.sock_clients.remove(sock)
+            
+            #log the number of client remaining on server
+            self.logger.log(logging.INFO, "Còn " + str(len(self.sock_clients)) + " client đang truy cập server")
         except:
             return
 
     #Client action with thread
     def ClientControl(self, conn):
+        
         message = ""
         while True:
             message = self.receiveData(conn)
@@ -267,7 +474,7 @@ class Server:
                             self.date = str(date.today())
                             self.ShowAllCurrencies(conn)
                         else:
-                            self.clientQuit(conn)
+                            self.clientLogout(conn)
                             return
                 elif (signal == 1): #user access
                     while True:
@@ -286,10 +493,34 @@ class Server:
                             elif (self.execute == "SSC"):
                                 self.showSpecificCurrency(conn)
                         else:
-                            self.clientQuit(conn)
+                            self.clientLogout(conn)
                             return
+                else:
+                    continue
             elif (message == "REGIST"):
                 self.regist(conn)
+            elif (message == "LOGOUT"):
+                self.clientLogout(conn)
+                break
             else:
                 self.clientQuit(conn)
                 break
+            
+#Server num thread
+def main():
+    logging.basicConfig(level=logging.DEBUG)
+    root = Tk()
+    root.title("Server") 
+    root.geometry("400x200")
+    root.resizable(0,0)
+    ttk.Label(root, text = "Tỷ giá tiền tệ", font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
+    ttk.Label(root, text = "Server", font = ('Times', 20)).pack(side = TOP, pady = 5)
+    ttk.Label(root, text = "Nhập số client cho phép kết nối đồng thời: ").pack(side = TOP, pady = 2)
+    nVar = StringVar()
+    ttk.Entry(root,textvariable= nVar, width = 20).pack(side = TOP, pady = 5)
+    nFunc = partial(submitNumThread,root, nVar)
+    ttk.Button(root, text = "Mở Server", command = nFunc).pack(side = TOP)
+    root.mainloop()
+
+if __name__ == '__main__':
+    main()

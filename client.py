@@ -128,13 +128,14 @@ class adminGUI(object):
 class userGUI(object):
 
     #User init
-    def __init__(self, master):
+    def __init__(self, master, username):
         master.withdraw()
         self.master = Toplevel(master)
         self.master.title("TỶ GIÁ TIỀN TỆ") 
         self.master.geometry("700x650") 
         self.master.resizable(0, 0)
         self.sclient = sclient
+        self.username = username
         Label(self.master, text = "NGÂN HÀNG NHÀ NƯỚC VIỆT NAM", fg = 'red',font = ('Times', 20)).pack(side = TOP, pady = 5)
         Label(self.master, text = "TỶ GIÁ TIỀN TỆ", fg = 'brown',font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
         self.topFrame = Frame(self.master)
@@ -304,45 +305,28 @@ class userGUI(object):
         if not flag:
             messagebox.showerror("Error", "Server đã ngừng kết nối")
             return
-        data = receive(sclient)
-        if (data == -100):
-            messagebox.showerror("Error", "Server đã ngừng kết nối")
-            return
-        data = json.loads(data)
         
-        fromCur = self.fromVar.get()
-        fromValue = int(self.fromValueVar.get())
         toCur = self.toVar.get()
-        toRate = 0
-        fromRate = 0
-        
-        for currency in data["results"]:
-            if currency["currency"] == fromCur:
-                fromRate = int(currency["buy_transfer"])
-            if currency["currency"] == toCur:
-                toRate = int(currency["buy_transfer"])
-        if fromCur != toCur:
-            if toCur == "VND":
-                toRate = 1
-            if fromCur == "VND":
-                fromRate = 1
-            
-            if fromRate == 0 or toRate == 0:
-                if fromRate == toRate:
-                    cur = fromCur + " và " + toCur
-                elif fromRate == 1:
-                    cur = fromCur
-                else:
-                    cur = toCur
-                messagebox.showerror("Error", "Chưa có dữ liệu về đồng ngoại tệ :" + cur)
-            else:   
-                toValue = round(fromValue*fromRate/toRate,1)
-                self.treev1.insert("", 'end', iid = self.exchangeTimes, text ="", values = (fromCur, fromValue, toCur, toValue))
-                self.exchangeTimes += 1
+        fromValue = self.fromValueVar.get()
+        fromCur = self.fromVar.get()
+        message = fromCur + '|' + toCur + '|' + fromValue
+        sendData(sclient, message)
+
+
+        message = receive(sclient)
+        if message != 'done':
+            messagebox.showerror("Error", message)
+        else:
+            toValue = float(receive(sclient))
+            val = (fromCur, str(fromValue), toCur, str(toValue))
+            self.treev1.insert("", 'end', iid = self.exchangeTimes, text = "", value = val)
+            self.exchangeTimes += 1
+        return
 
     #CloseClient
     def closeClient(self):
-        sendData(sclient, "QUIT")
+        sendData(sclient, "LOGOUT")
+        sendData(sclient, self.username)
         self.master.destroy()
         closing()
         
@@ -419,11 +403,14 @@ class loginGUI(object):
             return True
         elif (signal == '1'):
             messagebox.showinfo("Info", "Đăng nhập thành công")
-            userGUI(self.master)
+            userGUI(self.master, self.userVar.get())
             return True
         elif (signal == '-1'):
            messagebox.showwarning("Warning", "Sai mật khẩu")
            return False
+        elif (signal == 'active'):
+            messagebox.showwarning("Warning", "Tài khoản đang truy cập từ nơi khác")
+            return False
         else:
            messagebox.showwarning("Warning", "Tài khoản không tồn tại")
            return False
@@ -509,8 +496,8 @@ class clientGUI(object):
         self.hostEntry = Entry(self.master,textvariable = self.hostVar, width = 30).pack(side = TOP, pady = 2)
         self.submittedHost = self.hostVar.get()
         connectFunc = partial(self.connectServer, self.hostVar)
-        Button(self.master, text = "Kết nối đến Server", command = connectFunc).pack(side = TOP, pady = 2)
         self.connect_message = ""
+        Button(self.master, text = "Kết nối đến Server", command = connectFunc).pack(side = TOP, pady = 2)
         self.master.mainloop()
 
     #Connect to Server
@@ -526,11 +513,18 @@ class clientGUI(object):
                 loginGUI(self.master)
             elif self.connect_message == "Denied":
                 raise Exception
-        except Exception as E:
+        except Exception:
             if self.connect_message == "Denied":
                 messagebox.showerror("Error", "Server đã đạt đến giới hạn truy cập")
             else:
                 messagebox.showerror("Error", "Kết nối đến server thất bại")
+            sclient.shutdown(socket.SHUT_RDWR)
+            sclient.close()
+            try:
+                sclient = socket.socket(AF_INET, SOCK_STREAM)
+            except socket.error:
+                messagebox.showerror("Error", "Lỗi không thể tạo socket")
+            self.connect_message = ""
             return False
         return True
 
