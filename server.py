@@ -16,6 +16,7 @@ import requests
 import schedule
 import time
 from datetime import date
+from time import strftime
 
 #execute tool libraries
 import os
@@ -72,7 +73,7 @@ class ServerConsoleUI:
         # Create a logging handler using a queue
         self.log_queue = queue.Queue()
         self.queue_handler = QueueHandler(self.log_queue)
-        formatter = logging.Formatter('%(asctime)s: %(message)s')
+        formatter = logging.Formatter('%(asctime)s --> %(message)s', "%Y-%m-%d %H:%M:%S")
         self.queue_handler.setFormatter(formatter)
         logger.addHandler(self.queue_handler)
         # Start polling messages from the queue
@@ -102,16 +103,24 @@ class ServerInstructionUI:
 
     def __init__(self, frame):
         self.frame = frame
-        space = 10 * " "
+        space = 5 * " "
         ttk.Label(self.frame, text = "TỶ GIÁ TIỀN TỆ", font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
         ttk.Label(self.frame, text = "Server", font = ('Times', 20)).pack (side = TOP, pady = 10)
         ttk.Label(self.frame, text = "Thông tin hiển thị:", font = ('Consolas', 13)).pack(side = TOP, pady = 2)
         ttk.Label(self.frame, text = space + "|--> Thông tin từ server |   Màu đen" + space, font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
-        ttk.Label(self.frame, text = space + "|-->    Request từ client|   Màu xám" + space, foreground = 'gray', font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
+        ttk.Label(self.frame, text = space + "|-->   Request từ client |   Màu xám" + space, foreground = 'gray', font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
         ttk.Label(self.frame, text = space + "|-->   Dữ liệu từ client |  Màu xanh" + space, foreground = 'green' , font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
-        ttk.Label(self.frame, text = space + "|-->             Cảnh báo|   Màu cam" + space, foreground = 'orange', font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
-        ttk.Label(self.frame, text = space + "|-->                Lỗi  |    Màu đỏ" + space, foreground = 'red', font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
-
+        ttk.Label(self.frame, text = space + "|-->            Cảnh báo |   Màu cam" + space, foreground = 'orange', font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
+        ttk.Label(self.frame, text = space + "|-->                 Lỗi |    Màu đỏ" + space, foreground = 'red', font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
+        self.clock = ttk.Label(self.frame, font = ('Consolas', 30), text = strftime(" %d/%b/%Y \n--> %H:%M:%S "), foreground = 'black')
+        self.clock.pack(side = TOP, pady = 50, anchor = 'c')
+        self.time()
+        
+    def time(self):
+        string = strftime(" %d/%b/%Y \n--> %H:%M:%S ")
+        self.clock.config(text = string)
+        self.clock.after(1000, self.time)
+        
 #Show server GUI
 class App:
 
@@ -375,7 +384,6 @@ class Server:
     #convert amount of money to another one
     def CurrencyConvertor(self,sock):
         client_number = self.port_num_clients[sock.getpeername()[1]]
-        self.logger.log(logging.INFO, "Client [" + str(client_number) + "] vừa dùng công cụ chuyển đổi ngoại tệ")
         
         #reciever data from client
         data = self.receiveData(sock)
@@ -417,6 +425,13 @@ class Server:
             self.sendData(sock, str(toValue))      
         else:
             self.sendData(sock, message + "chưa có trong dữ liệu")
+        
+        #log to server console
+        self.logger.log(logging.INFO, "Client [" + str(client_number) + "] vừa dùng công cụ chuyển đổi ngoại tệ")
+        self.logger.log(logging.CRITICAL, "Client [" + str(client_number) +"]: Chuyển đổi từ " + fromCur)
+        self.logger.log(logging.CRITICAL, "Client [" + str(client_number) +"]: khoản " + str(fromValue))
+        self.logger.log(logging.CRITICAL, "Client [" + str(client_number) + "]: đến " + toCur)
+        self.logger.log(logging.INFO, "Server gửi đến Client [" + str(client_number) + "]: " + str(toValue))
         
         return False
 

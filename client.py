@@ -11,7 +11,7 @@ from datetime import date
 BUFF_SIZE = 1024
 PORT = 65432
 
-#Create socket
+#Init first socket
 try:
     sclient = socket.socket(AF_INET, SOCK_STREAM)
 except socket.error:
@@ -47,7 +47,7 @@ def closing():
     root.destroy()
 
 #Admin
-class adminGUI(object):
+class AdminAccessGUI(object):
 
     #Init Admin
     def __init__(self,master):
@@ -59,13 +59,13 @@ class adminGUI(object):
         self.master.resizable(0, 0)
         Label(self.master, text = "TỶ GIÁ NGOẠI TỆ", fg = 'red',font = ('Times', 25, 'bold')).pack(side = TOP, pady = 5)
         Label(self.master, text = "ADMIN", fg = 'brown',font = ('Times', 20)).pack(side = TOP, pady = 7)
-        Button(self.master, text = "Xem giá hiện tại", height = 2, width = 30, command = self.showCurrentCurrency).pack(side = TOP, pady = 5)
-        Button(self.master, text = "Cập nhật tỉ giá", height = 2, width = 30, command = self.updateRate).pack(side = TOP, pady = 10)
+        Button(self.master, text = "Xem giá hiện tại", height = 2, width = 30, command = self.showTodayCurrency).pack(side = TOP, pady = 5)
+        Button(self.master, text = "Cập nhật tỉ giá", height = 2, width = 30, command = self.UpdateRateRequest).pack(side = TOP, pady = 10)
         self.master.protocol("WM_DELETE_WINDOW", self.closeClient)
         self.master.mainloop()
 
     #show current currency
-    def showCurrentCurrency(self):
+    def showTodayCurrency(self):
         self.master1 = Toplevel(self.master)
         self.master1.title("TỶ GIÁ HỐI ĐOÁI HIỆN TẠI")
         self.master1.geometry("600x600")
@@ -117,7 +117,7 @@ class adminGUI(object):
         closing()
 
     #Update Rate
-    def updateRate(self):
+    def UpdateRateRequest(self):
         flag = sendData(sclient, "UPDR")
         if flag:
             messagebox.showinfo("Info", "Cập nhật hoàn tất")
@@ -125,7 +125,7 @@ class adminGUI(object):
             messagebox.showerror("Error", "Cập nhật thất bại")
 
 #User
-class userGUI(object):
+class UserAccessGUI(object):
 
     #User init
     def __init__(self, master, username):
@@ -331,7 +331,7 @@ class userGUI(object):
         closing()
         
 #Log In
-class loginGUI(object):
+class LoginScreenGUI(object):
 
     #Log In GUI
     def __init__(self, master):
@@ -399,11 +399,11 @@ class loginGUI(object):
             return
         elif (signal == '2'):
             messagebox.showinfo("Info", "Đăng nhập admin thành công")
-            adminGUI(self.master)
+            AdminAccessGUI(self.master)
             return True
         elif (signal == '1'):
             messagebox.showinfo("Info", "Đăng nhập thành công")
-            userGUI(self.master, self.userVar.get())
+            UserAccessGUI(self.master, self.userVar.get())
             return True
         elif (signal == '-1'):
            messagebox.showwarning("Warning", "Sai mật khẩu")
@@ -481,7 +481,7 @@ class loginGUI(object):
         self.regist1Button.place(x = 185, y = 420)
 
 #Client GUI main
-class clientGUI(object):
+class connectToServerGUI(object):
     def __init__(self, master):
         self.master = master
         self.sclient = sclient
@@ -490,7 +490,7 @@ class clientGUI(object):
         self.master.resizable(0, 0)
         Label(self.master, text = "TỶ GIÁ TIỀN TỆ", fg = 'blue',font = ('Times', 30, 'bold')).pack(side = TOP, pady = 5)
         Label(self.master, text = "Client", fg = 'blue',font = ('Times', 20)).pack(side = TOP, pady = 2)
-        Label(self.master, text = "Nhập IP", fg = 'black',font = ('Times', 10)).pack(side = TOP, pady = 2)
+        Label(self.master, text = "Nhập địa chỉ IP", fg = 'black',font = ('Times', 10)).pack(side = TOP, pady = 2)
         self.hostVar = StringVar()
         self.hostVar.set("")
         self.hostEntry = Entry(self.master,textvariable = self.hostVar, width = 30).pack(side = TOP, pady = 2)
@@ -510,7 +510,7 @@ class clientGUI(object):
             self.connect_message = receive(sclient)
             if self.connect_message == "Accept":
                 messagebox.showinfo("Info", "Kết nối đến server thành công")
-                loginGUI(self.master)
+                LoginScreenGUI(self.master)
             elif self.connect_message == "Denied":
                 raise Exception
         except Exception:
@@ -531,5 +531,5 @@ class clientGUI(object):
 #Main
 if __name__ == "__main__":
     root = Tk()
-    window = clientGUI(root)
+    window = connectToServerGUI(root)
     root.mainloop()
