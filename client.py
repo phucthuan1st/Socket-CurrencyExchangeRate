@@ -140,7 +140,7 @@ class userGUI(object):
         Label(self.master, text = "TỶ GIÁ TIỀN TỆ", fg = 'brown',font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
         self.topFrame = Frame(self.master)
         self.topFrame.pack(side = TOP, pady = 2, padx = 5)
-        Button(self.topFrame, text = "Chuyển đổi giữa các loại tiền tệ", command = self.CurrencyConvertor).pack(side = LEFT, padx = 5)
+        Button(self.topFrame, text = "Chuyển đổi giữa các loại tiền tệ", command = self.InitCurrencyConvertor).pack(side = LEFT, padx = 5)
         Button(self.topFrame, text = "Hiển thị tất cả tỉ giá hối đoái", command = self.ShowAllCurrencies).pack(side = LEFT, padx = 5)
         self.ListFile()
         self.middleFrame = Frame(self.master)
@@ -242,7 +242,7 @@ class userGUI(object):
         return       
     
     #Convert from one curency --> another
-    def CurrencyConvertor(self):
+    def InitCurrencyConvertor(self):
         self.clearTreeView()
         self.master1 = Toplevel(self.master)
         self.master1.title("Chuyển đổi tiền tệ")

@@ -1,39 +1,50 @@
+#sokcet and signal libraries
 import socket
-import json
+import signal
+
+#threading handle libraries
 from _thread import *
+import threading
+
 import logging
-from serverGUI import*
+
+#data handler libraries
 import json
 import requests
+
+#schedule and datetime handlers
 import schedule
 import time
-import threading
 from datetime import date
+
+#execute tool libraries
 import os
 import re
 import queue
-import logging
-import signal
+from functools import partial
+
+#GUI tkinter libraries
 from tkinter import *
 from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 from tkinter import ttk, VERTICAL, HORIZONTAL, N, S, E, W
-from functools import partial
 
+#get machine local host and port
 hostname = socket.gethostname()
 HOST = socket.gethostbyname(hostname) 
 PORT = 65432      
 
+#init default value
 BUFF_SIZE = 1024
 NClient = 5                   
 threadCount = 0
 
+#admin account init
 ADMIN_USR = "admin"     
 ADMIN_PSW = "adm"
 
-logger = logging.getLogger(__name__)
-
-NClient = 5                  
+#server console init
+logger = logging.getLogger(__name__)              
 
 class QueueHandler(logging.Handler):
     def __init__(self, log_queue):
@@ -43,8 +54,8 @@ class QueueHandler(logging.Handler):
     def emit(self, record):
         self.log_queue.put(record)
 
-#Show console server
-class ConsoleUI:
+#Show server log console
+class ServerConsoleUI:
     """Poll messages from a logging queue and display them in a scrolled text widget"""
 
     def __init__(self, frame):
@@ -86,8 +97,8 @@ class ConsoleUI:
                 self.display(record)
         self.frame.after(100, self.poll_log_queue)
 
-#Info
-class InfoUI:
+#Instruction in server GUI
+class ServerInstructionUI:
 
     def __init__(self, frame):
         self.frame = frame
@@ -101,7 +112,7 @@ class InfoUI:
         ttk.Label(self.frame, text = space + "|-->             Cảnh báo|   Màu cam" + space, foreground = 'orange', font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
         ttk.Label(self.frame, text = space + "|-->                Lỗi  |    Màu đỏ" + space, foreground = 'red', font = ('Consolas', 13)).pack(side = TOP, pady = 2, anchor = 'e')
 
-#Show main server
+#Show server GUI
 class App:
 
     #innit console server
@@ -128,8 +139,8 @@ class App:
         horizontal_pane.add(console_frame, weight=1)
         
         # Initialize all frames
-        self.form = InfoUI(form_frame)
-        self.console = ConsoleUI(console_frame)
+        self.form = ServerInstructionUI(form_frame)
+        self.console = ServerConsoleUI(console_frame)
         self.server = Server(logger,NClient)
         self.root.protocol('WM_DELETE_WINDOW', self.quit)
         self.root.bind('<Control-q>', self.quit)
@@ -140,7 +151,7 @@ class App:
         self.server.closeServer()
         self.root.destroy()
 
-#Submit max num client can connect
+#Set max number of thread to server
 def submitNumThread(root, nVar):
     global NClient
     NClient = int(nVar.get())
@@ -151,7 +162,7 @@ def submitNumThread(root, nVar):
         app.root.mainloop()
     return
 
-#Server
+#Server execution handle
 class Server:
 
     #Init server
@@ -506,7 +517,7 @@ class Server:
                 self.clientQuit(conn)
                 break
             
-#Server num thread
+#main function            
 def main():
     logging.basicConfig(level=logging.DEBUG)
     root = Tk()
