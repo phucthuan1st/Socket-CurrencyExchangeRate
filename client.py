@@ -138,6 +138,7 @@ class UserAccessGUI(object):
         self.username = username
         self.status = Label(self.master, text = "● Server: trực tuyến", fg = 'green',font = ('Consolas', 15))
         self.status.pack(side = TOP, pady = 5)
+        self.server_closed = False
         self.updateServerStatus()
         Label(self.master, text = "TỶ GIÁ TIỀN TỆ", fg = 'brown',font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
         self.topFrame = Frame(self.master)
@@ -173,10 +174,11 @@ class UserAccessGUI(object):
     #update server status
     def updateServerStatus(self):
         flag = sendData(self.sclient, 'Status')
-        if not flag:
+        if not flag and not self.server_closed:
             self.status.config(text = '● Server: ngoại tuyến', fg = 'red')
             messagebox.showwarning('Warning', 'Server đã đóng, vui lòng kết nối lại sau khi server mở trở lại')
-        self.master.after(500, self.updateServerStatus)
+            self.server_closed = True
+        self.master.after(1000, self.updateServerStatus)
     
     #show all file in data directory
     def ListFile(self):

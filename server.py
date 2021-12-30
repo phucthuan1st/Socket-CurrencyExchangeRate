@@ -411,7 +411,7 @@ class Server:
         if fromCur == "VND":
             fromRate = 1.0
         if toCur == "VND":
-            toCur = 1.0
+            toRate = 1.0
         #if both of these are not in data
         message = ""
         if fromRate == -1:
@@ -419,19 +419,22 @@ class Server:
         if toRate == -1:
             message = message + toCur + ' '
         
-        if message == "":
-            self.sendData(sock, 'done')
-            toValue = round(fromValue * fromRate / toRate, 2)
-            self.sendData(sock, str(toValue))      
-        else:
-            self.sendData(sock, message + "chưa có trong dữ liệu")
-        
         #log to server console
         self.logger.log(logging.INFO, "Client [" + str(client_number) + "] vừa dùng công cụ chuyển đổi ngoại tệ")
         self.logger.log(logging.CRITICAL, "Client [" + str(client_number) +"]: Chuyển đổi từ " + fromCur)
         self.logger.log(logging.CRITICAL, "Client [" + str(client_number) +"]: khoản " + str(fromValue))
         self.logger.log(logging.CRITICAL, "Client [" + str(client_number) + "]: đến " + toCur)
-        self.logger.log(logging.INFO, "Server gửi đến Client [" + str(client_number) + "]: " + str(toValue))
+        
+        if message == "":
+            self.sendData(sock, 'done')
+            toValue = round(fromValue * fromRate / toRate, 2)
+            self.sendData(sock, str(toValue))      
+            self.logger.log(logging.INFO, "Server phản hồi Client [" + str(client_number) + "]: " + str(toValue))
+        else:
+            message =  message + "chưa có trong dữ liệu"
+            self.sendData(sock, message)
+            self.logger.log(logging.ERROR, "Server phản hồi Client [" + str(client_number) + "]: " + message)
+
         
         return False
 
