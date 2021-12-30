@@ -463,6 +463,8 @@ class Server:
             
             #log the number of client remaining on server
             self.activeUsers.remove(str(usr))
+            
+            os.system("cls")
         except:
             return
 
@@ -478,6 +480,8 @@ class Server:
             
             #log the number of client remaining on server
             self.logger.log(logging.INFO, "Còn " + str(len(self.sock_clients)) + " client đang truy cập server")
+            
+            os.system("cls")
         except:
             return
 

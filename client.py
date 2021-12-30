@@ -175,6 +175,7 @@ class UserAccessGUI(object):
         flag = sendData(self.sclient, 'Status')
         if not flag:
             self.status.config(text = '● Server: ngoại tuyến', fg = 'red')
+            messagebox.showwarning('Warning', 'Server đã đóng, vui lòng kết nối lại sau khi server mở trở lại')
         self.master.after(500, self.updateServerStatus)
     
     #show all file in data directory
@@ -281,25 +282,25 @@ class UserAccessGUI(object):
         self.treev1.heading("4", text = "Số tiền")
         
         #from currency
-        self.fromLabel = Label(self.master1, text = "From:", font = ('Times', 12, 'bold'))
+        self.fromLabel = Label(self.master1, text = " Chuyển từ:", font = ('Times', 12, 'bold'))
         self.fromLabel.place(x = 30, y = 90)
         self.fromVar = StringVar()
         self.fromEntry = Entry(self.master1,textvariable= self.fromVar,font = ('Times', 12, 'bold'), width = 10, bg = "white")
-        self.fromEntry.place(x = 85, y = 90)
+        self.fromEntry.place(x = 115, y = 90)
         
         #to currency
-        self.toLabel = Label(self.master1, text = "  To:", font = ('Times', 12, 'bold'))
+        self.toLabel = Label(self.master1, text = "Chuyển đến:", font = ('Times', 12, 'bold'))
         self.toLabel.place(x = 30, y = 120)
         self.toVar = StringVar()
         self.toEntry = Entry(self.master1,textvariable= self.toVar,font = ('Times', 12, 'bold'), width = 10, bg = "white")
-        self.toEntry.place(x = 85, y = 120)
+        self.toEntry.place(x = 115, y = 120)
         
         #from currency value
-        self.fromValueLabel = Label(self.master1, text = "Amount:", font = ('Times', 12, 'bold'))
-        self.fromValueLabel.place(x = 200, y = 90)
+        self.fromValueLabel = Label(self.master1, text = "Khoản:", font = ('Times', 12, 'bold'))
+        self.fromValueLabel.place(x = 245, y = 90)
         self.fromValueVar = StringVar()
         self.fromValueEntry = Entry(self.master1,textvariable= self.fromValueVar,font = ('Times', 12, 'bold'), width = 15, bg = "white")
-        self.fromValueEntry.place(x = 265, y = 90)
+        self.fromValueEntry.place(x = 300, y = 90)
         
         self.exchangeTimes = 0
         self.exchangeButton = Button(self.master1, text = "Chuyển đổi", command = self.showExchangeResult)
