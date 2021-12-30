@@ -110,12 +110,6 @@ class AdminAccessGUI(object):
         self.master1.mainloop()
         return
 
-    #CloseClient
-    def closeClient(self):
-        sendData(sclient, "QUIT")
-        self.master.destroy()
-        closing()
-
     #Update Rate
     def UpdateRateRequest(self):
         flag = sendData(sclient, "UPDR")
@@ -123,6 +117,12 @@ class AdminAccessGUI(object):
             messagebox.showinfo("Info", "Cập nhật hoàn tất")
         else:
             messagebox.showerror("Error", "Cập nhật thất bại")
+    
+    #CloseClient
+    def closeClient(self):
+        sendData(sclient, "QUIT")
+        self.master.destroy()
+        closing()
 
 #User
 class UserAccessGUI(object):
@@ -136,7 +136,9 @@ class UserAccessGUI(object):
         self.master.resizable(0, 0)
         self.sclient = sclient
         self.username = username
-        Label(self.master, text = "NGÂN HÀNG NHÀ NƯỚC VIỆT NAM", fg = 'red',font = ('Times', 20)).pack(side = TOP, pady = 5)
+        self.status = Label(self.master, text = "● Server: trực tuyến", fg = 'green',font = ('Consolas', 15))
+        self.status.pack(side = TOP, pady = 5)
+        self.updateServerStatus()
         Label(self.master, text = "TỶ GIÁ TIỀN TỆ", fg = 'brown',font = ('Times', 30, 'bold')).pack(side = TOP, pady = 2)
         self.topFrame = Frame(self.master)
         self.topFrame.pack(side = TOP, pady = 2, padx = 5)
@@ -150,7 +152,6 @@ class UserAccessGUI(object):
         self.CurVar.set("All")
         Entry(self.middleFrame,textvariable= self.CurVar, width = 50).pack(side = LEFT, padx = 2)
         Button(self.middleFrame, text = "Xem tỷ giá", command = self.showSpecificCurrency).pack(side = LEFT)
-        
         #currency tree view
         self.bottomFrame = Frame(self.master)
         self.bottomFrame.pack(side = TOP, fill = X)
@@ -168,6 +169,13 @@ class UserAccessGUI(object):
         self.treev.heading("4", text = "Bán ra")
         self.master.protocol("WM_DELETE_WINDOW", self.closeClient)
         self.master.mainloop()    
+    
+    #update server status
+    def updateServerStatus(self):
+        flag = sendData(self.sclient, 'Status')
+        if not flag:
+            self.status.config(text = '● Server: ngoại tuyến', fg = 'red')
+        self.master.after(500, self.updateServerStatus)
     
     #show all file in data directory
     def ListFile(self):

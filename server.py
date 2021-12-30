@@ -504,11 +504,14 @@ class Server:
                             return
                 elif (signal == 1): #user access
                     while True:
-                        if (message != "HIS"):
-                            self.logger.log(logging.DEBUG,"Message: " + message)
                         message = self.receiveData(conn)
+                        if (message != "HIS" and message != "Status"):
+                            self.logger.log(logging.DEBUG,"Message: " + message)
+                        
                         if (message == "HIS"):
                             self.SendJsonHistory(conn)
+                        elif (message == 'Status'):
+                            continue
                         elif (re.match('\S\S\S-\d\d\d\d-\d\d-\d\d', message) is not None):
                             self.execute = message[0:3]
                             self.date = message[4:]
