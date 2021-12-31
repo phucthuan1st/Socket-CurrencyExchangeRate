@@ -546,8 +546,9 @@ class App:
         signal.signal(signal.SIGINT, self.quit)
 
     def killAllClient(self):
+        messagebox.showinfo('Info', 'Tất cả client đã bị đóng, cho phép kết nối lại sau 5s')
         self.server.killAll = True
-        self.killButton.after(3000, self.unkillAllClient)
+        self.killButton.after(5000, self.unkillAllClient)
         self.server.logger.log(logging.WARNING, "Server: đóng tất cả client")
         
     def unkillAllClient(self):
