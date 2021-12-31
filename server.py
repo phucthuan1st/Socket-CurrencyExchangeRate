@@ -120,56 +120,6 @@ class ServerInstructionUI:
         string = strftime(" %d/%b/%Y \n--> %H:%M:%S ")
         self.clock.config(text = string)
         self.clock.after(1000, self.time)
-        
-#Show server GUI
-class App:
-
-    #innit console server
-    def __init__(self, root):
-        global NClient
-        self.root = root
-        root.title('Server Console')
-        root.geometry("1400x600")
-        root.resizable(0,0)
-        root.columnconfigure(0, weight=1)
-        root.rowconfigure(0, weight=1)
-        
-        # Create the panes and frames
-        vertical_pane = ttk.PanedWindow(self.root, orient=VERTICAL)
-        vertical_pane.grid(row=0, column=0, sticky="nsew")
-        horizontal_pane = ttk.PanedWindow(vertical_pane, orient=HORIZONTAL)
-        vertical_pane.add(horizontal_pane)
-        form_frame = ttk.Labelframe(horizontal_pane, text="My Server")
-        form_frame.columnconfigure(1, weight=1)
-        horizontal_pane.add(form_frame, weight=1)
-        console_frame = ttk.Labelframe(horizontal_pane, text="Console")
-        console_frame.columnconfigure(0, weight=1)
-        console_frame.rowconfigure(0, weight=1)
-        horizontal_pane.add(console_frame, weight=1)
-        
-        # Initialize all frames
-        self.form = ServerInstructionUI(form_frame)
-        self.console = ServerConsoleUI(console_frame)
-        self.server = Server(logger,NClient)
-        self.killButton = ttk.Button(form_frame, text = "Kill tất cả client", command = self.killAllClient)
-        self.killButton.pack(side = TOP, pady = 35)
-        self.root.protocol('WM_DELETE_WINDOW', self.quit)
-        self.root.bind('<Control-q>', self.quit)
-        signal.signal(signal.SIGINT, self.quit)
-
-    def killAllClient(self):
-        self.server.killAll = True
-        self.killButton.after(3000, self.unkillAllClient)
-        self.server.logger.log(logging.WARNING, "Server: đóng tất cả client")
-        
-    def unkillAllClient(self):
-        self.server.killAll = False
-        self.server.threadCount = 0
-
-    #Close server
-    def quit(self, *args):
-        self.server.closeServer()
-        self.root.destroy()
 
 #Set max number of thread to server
 def submitNumThread(root, nVar):
@@ -558,6 +508,56 @@ class Server:
             else:
                 self.clientQuit(conn)
                 break
+
+#Show server GUI
+class App:
+
+    #innit console server
+    def __init__(self, root):
+        global NClient
+        self.root = root
+        root.title('Server Console')
+        root.geometry("1400x600")
+        root.resizable(0,0)
+        root.columnconfigure(0, weight=1)
+        root.rowconfigure(0, weight=1)
+        
+        # Create the panes and frames
+        vertical_pane = ttk.PanedWindow(self.root, orient=VERTICAL)
+        vertical_pane.grid(row=0, column=0, sticky="nsew")
+        horizontal_pane = ttk.PanedWindow(vertical_pane, orient=HORIZONTAL)
+        vertical_pane.add(horizontal_pane)
+        form_frame = ttk.Labelframe(horizontal_pane, text="My Server")
+        form_frame.columnconfigure(1, weight=1)
+        horizontal_pane.add(form_frame, weight=1)
+        console_frame = ttk.Labelframe(horizontal_pane, text="Console")
+        console_frame.columnconfigure(0, weight=1)
+        console_frame.rowconfigure(0, weight=1)
+        horizontal_pane.add(console_frame, weight=1)
+        
+        # Initialize all frames
+        self.form = ServerInstructionUI(form_frame)
+        self.console = ServerConsoleUI(console_frame)
+        self.server = Server(logger,NClient)
+        self.killButton = ttk.Button(form_frame, text = "Kill tất cả client", command = self.killAllClient)
+        self.killButton.pack(side = TOP, pady = 35)
+        self.root.protocol('WM_DELETE_WINDOW', self.quit)
+        self.root.bind('<Control-q>', self.quit)
+        signal.signal(signal.SIGINT, self.quit)
+
+    def killAllClient(self):
+        self.server.killAll = True
+        self.killButton.after(3000, self.unkillAllClient)
+        self.server.logger.log(logging.WARNING, "Server: đóng tất cả client")
+        
+    def unkillAllClient(self):
+        self.server.killAll = False
+        self.server.threadCount = 0
+
+    #Close server
+    def quit(self, *args):
+        self.server.closeServer()
+        self.root.destroy()
             
 #main function            
 def main():
