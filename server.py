@@ -151,9 +151,20 @@ class App:
         self.form = ServerInstructionUI(form_frame)
         self.console = ServerConsoleUI(console_frame)
         self.server = Server(logger,NClient)
+        self.killButton = ttk.Button(form_frame, text = "Kill tất cả client", command = self.killAllClient)
+        self.killButton.pack(side = TOP, pady = 35)
         self.root.protocol('WM_DELETE_WINDOW', self.quit)
         self.root.bind('<Control-q>', self.quit)
         signal.signal(signal.SIGINT, self.quit)
+
+    def killAllClient(self):
+        self.server.killAll = True
+        self.killButton.after(3000, self.unkillAllClient)
+        self.server.logger.log(logging.WARNING, "Server: đóng tất cả client")
+        
+    def unkillAllClient(self):
+        self.server.killAll = False
+        self.server.threadCount = 0
 
     #Close server
     def quit(self, *args):
@@ -186,6 +197,7 @@ class Server:
         self.port_num_clients = {}
         self.activeUsers = []
         self.isOpen = False
+        self.killAll = False
         self.updateJsonData()
         self.schedule = schedule.every(15).minutes.do(self.updateJsonData)
         self.autoUpdateThread = threading.Thread(target = self.autoUpdate)
@@ -450,6 +462,14 @@ class Server:
         client_number = self.port_num_clients[sock.getpeername()[1]]
         self.logger.log(logging.INFO, "Tỉ giá của đồng " + cur_name + " đã được gửi đến client [" + str(client_number) + "]")
         return False
+    
+    #if kill all ->> kill all client
+    def sendStatus(self, sock):
+        if self.killAll:
+            self.sendData(sock, "Disconnect")
+            self.clientQuit(sock)
+        else:
+            self.sendData(sock, "Connected")
 
     #Client Quit
     def clientLogout(self, sock):
@@ -467,10 +487,10 @@ class Server:
             #log the number of client remaining on server
             self.activeUsers.remove(str(usr))
             
-            os.system("cls")
         except:
             return
 
+    #force client quit
     def clientQuit(self, sock):
         try:
             client_number = self.port_num_clients[sock.getpeername()[1]]
@@ -480,11 +500,8 @@ class Server:
             self.port_num_clients.pop(sock.getpeername()[1])
             sock.close()
             self.sock_clients.remove(sock)
+            self.activeUsers.pop()
             
-            #log the number of client remaining on server
-            self.logger.log(logging.INFO, "Còn " + str(len(self.sock_clients)) + " client đang truy cập server")
-            
-            os.system("cls")
         except:
             return
 
@@ -518,7 +535,7 @@ class Server:
                         if (message == "HIS"):
                             self.SendJsonHistory(conn)
                         elif (message == 'Status'):
-                            continue
+                            self.sendStatus(conn)
                         elif (re.match('\S\S\S-\d\d\d\d-\d\d-\d\d', message) is not None):
                             self.execute = message[0:3]
                             self.date = message[4:]

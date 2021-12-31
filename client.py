@@ -178,6 +178,12 @@ class UserAccessGUI(object):
             self.status.config(text = '● Server: ngoại tuyến', fg = 'red')
             messagebox.showwarning('Warning', 'Server đã đóng, vui lòng kết nối lại sau khi server mở trở lại')
             self.server_closed = True
+        else:
+            message = receive(sclient)
+            if message == 'Disconnect':
+                messagebox.showerror("Error", "Server đã ngắt kết nối")
+                self.status.config(text = '● Server: mất kết nối', fg = 'orange')
+                return
         self.master.after(1000, self.updateServerStatus)
     
     #show all file in data directory
