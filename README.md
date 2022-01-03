@@ -6,6 +6,22 @@
 * Tô Trần Sơn Bá
 
 ## API: [vAPI Appmob](https://vapi.vnappmob.com/api/v2/exchange_rate)
+### [Document](https://vapi-vnappmob.readthedocs.io/en/latest/exchange_rate.v2.html)
+### [Get API Key](https://vapi.vnappmob.com/api/request_api_key?scope=exchange_rate)
+> Notice that the api_key will be expired by default after 15 days, so you will need to get new API Key automacally.
+> You can follow this code to automacally update your data:
+```php
+        #get API key automacally
+        url = "https://vapi.vnappmob.com/api/request_api_key?scope=exchange_rate"
+        API_key_request_data = requests.get(url).json()
+        API_key = API_key_request_data["results"]
+
+        #use API key get in above to request data
+        url = "https://vapi.vnappmob.com/api/v2/exchange_rate/bid?api_key="
+        request_url = url + str(API_key)
+        recieve = requests.get(request_url).json()
+```
+> The data will be dumped into a json file
 
 ## Special Thanks to:
 * Mr. Lê Hà Minh
