@@ -1,6 +1,6 @@
 # SOCKET TRA CỨU TIỀN TỆ
 
-## Contribute:
+## Contributer:
 * Nguyễn Phúc Thuần
 * Lê Trương Kinh Thành
 * Tô Trần Sơn Bá
