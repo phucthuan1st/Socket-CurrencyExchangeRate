@@ -15,6 +15,7 @@
 ## Contact for work:
 * Nguyễn Phúc Thuần: [Email](phucthuan.work@gmail.com)
 * Lê Trương Kinh Thành: [Email](letruongkinhthanh@gmail.com)
+* Tô Trần Sơn Bá: [Email](sonba4102@gmail.com)
 
 ## Libraries used:
 * [Tkinter](https://docs.python.org/3/library/tkinter.html)
@@ -36,5 +37,10 @@
 * [Basic Python client socket example](https://stackoverflow.com/questions/7749341/basic-python-client-socket-example)
 * [Lập trình Socket - Đức Hiếu](https://www.youtube.com/playlist?list=PLF5iDxYhcQyf19PKUm4vi9jDp5OByF5Wt)
 * [Login and Registration - Python Tkinter](https://www.youtube.com/watch?v=NAwcl9R0M9w)
+
+## More about this project
+We build this project in two months, so it have some bugs and feature that we can do better, so if we have time, we will update it carefully.
+If you fork or clone this repository, please keep our credit as a reference for your stuff.
+This project is done by FIT@HCMUS student.
 
 ### This project is only used for educational activities, commercial activities are prohibited
