@@ -1,4 +1,6 @@
-# SOCKET TRA CỨU TIỀN TỆ
+# SOCKET PROGRAMMING
+# LẬP TRÌNH SOCKET - TRA CỨU TIỀN TỆ
+# FIT@HCMUS
 
 ## Contributer:
 * Nguyễn Phúc Thuần
