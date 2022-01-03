@@ -9,7 +9,7 @@
 ### [Document](https://vapi-vnappmob.readthedocs.io/en/latest/exchange_rate.v2.html)
 ### [Get API Key](https://vapi.vnappmob.com/api/request_api_key?scope=exchange_rate)
 > Notice that the api_key will be expired by default after 15 days, so you will need to get new API Key automacally.
-> You can follow this code to automacally update your data:
+> You can follow these code to automacally update your data:
 ```php
         #get API key automacally
         url = "https://vapi.vnappmob.com/api/request_api_key?scope=exchange_rate"
