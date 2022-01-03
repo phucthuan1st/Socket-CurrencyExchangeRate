@@ -5,10 +5,6 @@
 * Lê Trương Kinh Thành
 * Tô Trần Sơn Bá
 
-![Phúc Thuân](https://imgur.com/a/eiOrgwa)
-![Kinh Thành](https://imgur.com/a/q5m8Xr7)
-![Sơn Bá](https://imgur.com/a/xah3QWf)
-
 ## API: [vAPI Appmob](https://vapi.vnappmob.com/api/v2/exchange_rate)
 
 ## Special Thanks to:
@@ -17,8 +13,8 @@
 * Mrs. Chung Thùy Linh
 
 ## Contact for work:
-* Nguyễn Phúc Thuần: [Email](phucthuan.work@gmail.com), [Facebook](https://www.facebook.com/phucthuan95)
-* Lê Trương Kinh Thành: [Email](letruongkinhthanh@gmail.com), [Facebook](https://www.facebook.com/kinhthanh.letruong.3)
+* Nguyễn Phúc Thuần: [Email](phucthuan.work@gmail.com), [Facebook](https://www.facebook.com/phucthuan95), [Github](https://github.com/phucthuan1st/)
+* Lê Trương Kinh Thành: [Email](letruongkinhthanh@gmail.com), [Facebook](https://www.facebook.com/kinhthanh.letruong.3), [Github](https://github.com/KinhThanh38/)
 * Tô Trần Sơn Bá: [Email](sonba4102@gmail.com), [Facebook](https://www.facebook.com/ba.tran.2002)
 
 ## Libraries used:
