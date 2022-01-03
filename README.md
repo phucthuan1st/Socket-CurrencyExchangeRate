@@ -37,4 +37,4 @@
 * [Lập trình Socket - Đức Hiếu](https://www.youtube.com/playlist?list=PLF5iDxYhcQyf19PKUm4vi9jDp5OByF5Wt)
 * [Login and Registration - Python Tkinter](https://www.youtube.com/watch?v=NAwcl9R0M9w)
 
-## This project is only used for educational activities, commercial activities are prohibited
+### This project is only used for educational activities, commercial activities are prohibited
