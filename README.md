@@ -13,8 +13,8 @@
 * Mrs. Chung Thùy Linh
 
 ## Contact for work:
-* Nguyễn Phúc Thuần: [Phúc Thuần mail](phucthuan.work@gmail.com)
-* Lê Trương Kinh Thành: [Kinh Thành mail](letruongkinhthanh@gmail.com)
+* Nguyễn Phúc Thuần: [Email](phucthuan.work@gmail.com)
+* Lê Trương Kinh Thành: [Email](letruongkinhthanh@gmail.com)
 
 ## Libraries used:
 * [Tkinter](https://docs.python.org/3/library/tkinter.html)
