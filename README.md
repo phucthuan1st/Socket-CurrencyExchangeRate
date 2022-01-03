@@ -59,6 +59,6 @@
 ## More about this project
 We build this project in two months, so it have some bugs and feature that we can do better, so if we have time, we will update it carefully.
 If you fork or clone this repository, please keep our credit as a reference for your stuff.
-This project is done by FIT@HCMUS student.
+This project is done by FIT@HCMUS students.
 
 ### This project is only used for educational activities, commercial activities are prohibited
